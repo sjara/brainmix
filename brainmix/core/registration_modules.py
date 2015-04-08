@@ -19,7 +19,7 @@ functions = []
 # -- ITK --
 itkLoaded = True
 try:
-    import itk
+    import itkX
     import itk_affine_registration
 
     methods.append("ITK Affine")

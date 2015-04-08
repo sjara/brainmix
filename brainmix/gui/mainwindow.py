@@ -32,8 +32,12 @@ class MainWindow(QtGui.QMainWindow):
         # Grab the registration methods
         self.regMethods = registration_modules.get_registration_methods()
         self.regFunctions = registration_modules.get_registration_functions()
-        self.savedRegMethod = self.regMethods[0]
-        
+
+        if len(self.regMethods) != 0:
+            self.savedRegMethod = self.regMethods[0]
+        else:
+            self.savedRegMethod = None
+            
         # Intialize 
         self.init_ui()
       
@@ -118,6 +122,8 @@ class MainWindow(QtGui.QMainWindow):
     # -- Slot for image registration --
     @QtCore.Slot()
     def slot_register(self):
+        
+        aligned = False
         for i in range(0, len(self.regMethods)):
                 if self.savedRegMethod == self.regMethods[i]:
 
@@ -126,12 +132,19 @@ class MainWindow(QtGui.QMainWindow):
                         self.data.set_aligned_images(self.regFunctions[i](self.data.get_filenames()))
                     else:
                         self.data.set_aligned_images(self.regFunctions[i](self.data.get_images()))
-        self.alignedViewer.set_image(self.data.get_current_aligned_image())
+                    aligned = True
 
+        if aligned:
+            self.alignedViewer.set_image(self.data.get_current_aligned_image())
+        else:
+            print "No Registation Methods!"
 
     # -- Slot for switching registration method --
     @QtCore.Slot()
     def slot_switch_reg_methods(self):
+        if len(self.regMethods) == 0:
+            return
+        
         for i in range(0, len(self.regActs)):
             if self.regActs[i].isChecked():
                 self.savedRegMethod = self.regMethods[i]
