@@ -19,7 +19,7 @@ functions = []
 # -- ITK --
 itkLoaded = True
 try:
-    import itkX
+    import itk
     import itk_affine_registration
 
     methods.append("ITK Affine")
@@ -30,6 +30,16 @@ except ImportError:
     print "ITK Methods not supported"
 
 # -- thunder --
+thunderLoded = True
+try:
+    import main
+
+    methods.append("Rigid")
+    functions.append(main.registration)
+    
+except ImportError:
+    tunderLoaded = False
+    print "Thunder Not loaded"
 
 # ------ #    
 
