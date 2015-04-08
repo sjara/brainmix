@@ -16,11 +16,7 @@ sys.path.append("./Modules/")
 methods = []
 functions = []
 
-<<<<<<< HEAD
-# -- itk -- 
-=======
 # -- ITK --
->>>>>>> 708fc25a688c90058aefb924c7fbc8ffb92d1413
 itkLoaded = True
 try:
     import itk
@@ -33,12 +29,10 @@ except ImportError:
     itkLoaded = False
     print "ITK Methods not supported"
 
-<<<<<<< HEAD
 # -- thunder --
 
 # ------ #    
-=======
->>>>>>> 708fc25a688c90058aefb924c7fbc8ffb92d1413
+
 def get_registration_methods():
     return methods
 
