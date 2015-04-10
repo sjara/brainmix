@@ -6,7 +6,9 @@ Written by Kristi Potter
 March 11, 2015
 '''
 
-import sys, os
+import sys
+import os
+import signal  # To enable Ctrl-C to quit application from terminal
 from optparse import OptionParser
 from PySide import QtGui
 sys.path.append("./gui/")
@@ -35,10 +37,12 @@ def BrainMix():
         print "Implement non-gui workflow!"
     # Else, pop up the Qt window
     else:
+        signal.signal(signal.SIGINT, signal.SIG_DFL) # Enable Ctrl-C
         app = QtGui.QApplication(sys.argv)
         mainWindow = mainwindow.MainWindow()
         mainWindow.show()
-        sys.exit(app.exec_())
-    
+        #sys.exit(app.exec_())
+        app.exec_()
+
 if __name__ == '__main__':
     BrainMix()
