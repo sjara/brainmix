@@ -222,8 +222,8 @@ class MainWindow(QtGui.QMainWindow):
         key = event.key()
         if key == QtCore.Qt.Key_Left:
             self.data.decrement_current_image()
+            self.set_image()
         elif key == QtCore.Qt.Key_Right:
             self.data.increment_current_image()
-        self.set_image()
-
+            self.set_image()
         event.accept()
