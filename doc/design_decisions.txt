@@ -1,0 +1,13 @@
+
+ DESIGN DECISIONS
+
+* brainmix.py should not use a function BrainMix().
+  By running the app on the global workspace, we can do introspection of the graphical objects
+  during an interactive session (for debugging)
+  [SJ 2015-04-10] 
+
+* The module optparse is deprecated
+  https://docs.python.org/2/library/optparse.html
+  Use argparse instead
+
+
