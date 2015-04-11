@@ -53,7 +53,7 @@ def BrainMix():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--nogui', action='store_true',
-                        help='Run application with no User Graphical Interface.')
+                        help='Run application without a Graphical User Interface.')
     args = parser.parse_args()
 
     if args.nogui:
