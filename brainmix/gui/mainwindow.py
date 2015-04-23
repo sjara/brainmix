@@ -93,7 +93,7 @@ class MainWindow(QtGui.QMainWindow):
                                         triggered=self.slot_zoom_out)
         viewMenu.addAction(self.zoomOutAct)
         self.fullSizeAct = QtGui.QAction("Full Size", self,
-                                        shortcut="Ctrl+-", enabled=True,
+                                        shortcut="Ctrl+n", enabled=True,
                                         triggered=self.slot_full_size)
         viewMenu.addAction(self.fullSizeAct)
 
