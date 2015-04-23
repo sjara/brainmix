@@ -65,6 +65,7 @@ class MainWindow(QtGui.QMainWindow):
 
     # -- Set the current image --
     def set_image(self):
+        print "main windoow set image"
         self.imageViewer.set_image(self.data.get_current_image())
         if self.data.have_aligned():
             self.alignedViewer.set_image(self.data.get_current_aligned_image())
@@ -82,11 +83,6 @@ class MainWindow(QtGui.QMainWindow):
 
         # View Menu
         viewMenu = menubar.addMenu('View')
-        self.fitToWindowAct = QtGui.QAction("&Fit to Window", self,
-                                            enabled=True, checkable=True,
-                                            shortcut="Ctrl+F",
-                                            triggered=self.slot_fit_to_window)
-        viewMenu.addAction(self.fitToWindowAct)
         self.zoomInAct = QtGui.QAction("Zoom In (25%)", self,
                                         shortcut="Ctrl+=",
                                         enabled=True,
@@ -96,10 +92,19 @@ class MainWindow(QtGui.QMainWindow):
                                         shortcut="Ctrl+-", enabled=True,
                                         triggered=self.slot_zoom_out)
         viewMenu.addAction(self.zoomOutAct)
-        self.normalSizeAct = QtGui.QAction("&Normal Size", self,
-                                            shortcut="Ctrl+S", enabled=True,
-                                            triggered=self.slot_normal_size)
-        viewMenu.addAction(self.normalSizeAct)
+        self.fullSizeAct = QtGui.QAction("Full Size", self,
+                                        shortcut="Ctrl+-", enabled=True,
+                                        triggered=self.slot_full_size)
+        viewMenu.addAction(self.fullSizeAct)
+
+        
+        viewMenu.addSeparator()
+        self.fitToWindowAct = QtGui.QAction("&Fit to Window", self,
+                                            enabled=True, checkable=True,
+                                            shortcut="Ctrl+F",
+                                            triggered=self.slot_fit_to_window)
+        viewMenu.addAction(self.fitToWindowAct)
+       
 
         # Registration Menu
         regMenu = menubar.addMenu('Registration')
@@ -112,13 +117,7 @@ class MainWindow(QtGui.QMainWindow):
             self.regActions.addAction(act)
             
         self.regAct = regMenu.addAction("In-Subject Registration", self.slot_register)
-        
-    # -- Update the action --
-    def update_actions(self):
-        self.zoomInAct.setEnabled(not self.fitToWindowAct.isChecked())
-        self.zoomOutAct.setEnabled(not self.fitToWindowAct.isChecked())
-        self.normalSizeAct.setEnabled(not self.fitToWindowAct.isChecked())
-
+    
     # -- Slot for image registration --
     @QtCore.Slot()
     def slot_register(self):
@@ -162,25 +161,27 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.imageViewer.fit_to_window(False)
             self.alignedViewer.fit_to_window(False)
-        self.update_actions();
 
     # -- Slot for zoom in --
     @QtCore.Slot()
     def slot_zoom_in(self):
         self.imageViewer.zoom_in()
         self.alignedViewer.zoom_in()
+        self.fitToWindowAct.setChecked(False)
 
     # -- Slot for zoom out --
     @QtCore.Slot()
     def slot_zoom_out(self):
         self.imageViewer.zoom_out()
         self.alignedViewer.zoom_out()
+        self.fitToWindowAct.setChecked(False)
 
-    # -- Slot for normal size --
+    # -- Slot for full size --
     @QtCore.Slot()
-    def slot_normal_size(self):
-        self.imageViewer.normal_size()
-        self.alignedViewer.normal_size()
+    def slot_full_size(self):
+        self.imageViewer.full_size()
+        self.alignedViewer.full_size()
+        self.fitToWindowAct.setChecked(False)
  
     # -- Open images --
     def open_images(self):
