@@ -32,10 +32,13 @@ except ImportError:
 # -- thunder --
 thunderLoded = True
 try:
-    import main
-
-    methods.append("Rigid")
-    functions.append(main.registration)
+    import registration 
+    methods.append("Thunder Registration")
+    functions.append(registration.registration)
+    
+    #import main
+    #methods.append("Rigid")
+    #functions.append(main.registration)
     
 except ImportError:
     tunderLoaded = False
