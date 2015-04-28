@@ -65,7 +65,6 @@ class MainWindow(QtGui.QMainWindow):
 
     # -- Set the current image --
     def set_image(self):
-        print "main windoow set image"
         self.imageViewer.set_image(self.data.get_current_image())
         if self.data.have_aligned():
             self.alignedViewer.set_image(self.data.get_current_aligned_image())
@@ -105,7 +104,6 @@ class MainWindow(QtGui.QMainWindow):
                                             triggered=self.slot_fit_to_window)
         viewMenu.addAction(self.fitToWindowAct)
        
-
         # Registration Menu
         regMenu = menubar.addMenu('Registration')
         methMenu = regMenu.addMenu('Methods')
@@ -130,7 +128,10 @@ class MainWindow(QtGui.QMainWindow):
                     if "ITK" in self.savedRegMethod:
                         self.data.set_aligned_images(self.regFunctions[i](self.data.get_filenames()))
                     else:
-                        self.data.set_aligned_images(self.regFunctions[i](self.data.get_images()))
+                        print "here"
+                        images = self.regFunctions[i](self.data.get_images())
+                        print "done"
+                        self.data.set_aligned_images(images)
                     aligned = True
 
         if aligned:
@@ -200,6 +201,7 @@ class MainWindow(QtGui.QMainWindow):
             self.data.set_filenames(files)
 
             # Load in the images
+            #self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
             self.data.set_images(skimage.io.ImageCollection(files).concatenate())
         
             # Send the first image to the viewer

@@ -9,7 +9,7 @@ from PySide import QtGui
 import numpy2qimage
 
 # - - - Widget to view a series of images - - -
-class ImageViewer(QtGui.QWidget):
+class ImageViewer(QtGui.QScrollArea):
   
     # -- init --
     def __init__(self, parent = None):
@@ -25,19 +25,15 @@ class ImageViewer(QtGui.QWidget):
         self.imageLabel.setScaledContents(True)
 
         self.scrollArea = QtGui.QScrollArea()
-        self.scrollArea.setBackgroundRole(QtGui.QPalette.Dark)
-        self.scrollArea.setWidget(self.imageLabel);
-
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(self.scrollArea)
-        self.setLayout(layout)
-
+        self.setBackgroundRole(QtGui.QPalette.Dark)
+        self.setWidget(self.imageLabel);
         self.resize(500, 400)
-        
 
     # -- Set the image --
     def set_image(self, image):
+        
         pixmap = QtGui.QPixmap.fromImage(numpy2qimage.numpy2qimage(image))
+        
         self.origSize = pixmap.size()
         self.imageLabel.setPixmap(pixmap)
         self.scaleFactor = 1.0
@@ -57,7 +53,7 @@ class ImageViewer(QtGui.QWidget):
     def resize_image(self):
         if self.imageLabel.pixmap() != None:
             pixSize = self.imageLabel.pixmap().size()
-            pixSize.scale(self.scrollArea.size()*.9975, QtCore.Qt.KeepAspectRatio)
+            pixSize.scale(self.size()*.9975, QtCore.Qt.KeepAspectRatio)
             self.scaleFactor = float(pixSize.width())/float(self.origSize.width())            
             self.imageLabel.setFixedSize(pixSize)
           
@@ -94,9 +90,14 @@ class ImageViewer(QtGui.QWidget):
        
     # -- Adjust the scroll bars --
     def adjust_scroll_bars(self, factor):
-        self.adjust_scroll_bar(self.scrollArea.horizontalScrollBar(), factor);
-        self.adjust_scroll_bar(self.scrollArea.verticalScrollBar(), factor);
+        self.adjust_scroll_bar(self.horizontalScrollBar(), factor);
+        self.adjust_scroll_bar(self.verticalScrollBar(), factor);
     def adjust_scroll_bar(self, scrollBar, factor):
         scrollBar.setValue(int(factor * scrollBar.value() + ((factor - 1) * scrollBar.pageStep()/2)))
         
-  
+    # -- Catch key press -- 
+    def keyPressEvent(self, event):
+        '''
+        Forward key presses to the parent
+        '''
+        event.ignore()
