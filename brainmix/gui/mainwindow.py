@@ -27,7 +27,8 @@ class MainWindow(QtGui.QMainWindow):
 
         # Widget members
         self.imageViewer = image_viewer.ImageViewer(self)
-        self.alignedViewer = image_viewer.ImageViewer(self)
+        self.showAligned = False
+        #self.alignedViewer = image_viewer.ImageViewer(self)
 
         # Grab the registration methods
         self.regMethods = registration_modules.get_registration_methods()
@@ -54,7 +55,7 @@ class MainWindow(QtGui.QMainWindow):
         layout = QtGui.QHBoxLayout()
         groupBox.setLayout(layout)
         layout.addWidget(self.imageViewer)
-        layout.addWidget(self.alignedViewer)
+        #layout.addWidget(self.alignedViewer)
 
         # Set the groupbox as the central window
         self.setCentralWidget(groupBox)
@@ -65,9 +66,12 @@ class MainWindow(QtGui.QMainWindow):
 
     # -- Set the current image --
     def set_image(self):
-        self.imageViewer.set_image(self.data.get_current_image())
-        if self.data.have_aligned():
-            self.alignedViewer.set_image(self.data.get_current_aligned_image())
+        if self.showAligned:
+            self.imageViewer.set_image(self.data.get_current_aligned_image())
+        else:
+            self.imageViewer.set_image(self.data.get_current_image())
+        #if self.data.have_aligned():
+        #    self.alignedViewer.set_image(self.data.get_current_aligned_image())
 
     # -- Create the menus --
     def create_menus(self):
@@ -82,6 +86,12 @@ class MainWindow(QtGui.QMainWindow):
 
         # View Menu
         viewMenu = menubar.addMenu('View')
+        self.showAlignedAct = QtGui.QAction("Show Aligned", self,checkable=True,
+                                            shortcut="Ctrl+a", enabled=False,
+                                            triggered=self.slot_show_aligned)
+        viewMenu.addAction(self.showAlignedAct)
+        viewMenu.addSeparator()
+        
         self.zoomInAct = QtGui.QAction("Zoom In (25%)", self,
                                         shortcut="Ctrl+=",
                                         enabled=True,
@@ -132,9 +142,13 @@ class MainWindow(QtGui.QMainWindow):
                         images = self.regFunctions[i](self.data.get_images())
                         self.data.set_aligned_images(images)
                     aligned = True
+                    self.showAligned = True
 
         if aligned:
-            self.alignedViewer.set_image(self.data.get_current_aligned_image())
+            self.showAlignedAct.setEnabled(True)
+            self.showAlignedAct.setChecked(True)
+            #self.alignedViewer.set_image(self.data.get_current_aligned_image())
+            
         else:
             print "No Registation Methods!"
 
@@ -148,7 +162,15 @@ class MainWindow(QtGui.QMainWindow):
             if self.regActs[i].isChecked():
                 self.savedRegMethod = self.regMethods[i]
                 break    
+
+    # -- Slot for showing the aligned images --
+    @QtCore.Slot()
+    def slot_show_aligned(self):
+        self.showAligned = self.showAlignedAct.isChecked()
+        self.set_image()
         
+        
+            
     # -- Slot for fit to window --
     @QtCore.Slot()
     def slot_fit_to_window(self):
@@ -157,30 +179,30 @@ class MainWindow(QtGui.QMainWindow):
         '''
         if self.fitToWindowAct.isChecked():
             self.imageViewer.fit_to_window(True)
-            self.alignedViewer.fit_to_window(True)
+            #self.alignedViewer.fit_to_window(True)
         else:
             self.imageViewer.fit_to_window(False)
-            self.alignedViewer.fit_to_window(False)
+            #self.alignedViewer.fit_to_window(False)
 
     # -- Slot for zoom in --
     @QtCore.Slot()
     def slot_zoom_in(self):
         self.imageViewer.zoom_in()
-        self.alignedViewer.zoom_in()
+        #self.alignedViewer.zoom_in()
         self.fitToWindowAct.setChecked(False)
 
     # -- Slot for zoom out --
     @QtCore.Slot()
     def slot_zoom_out(self):
         self.imageViewer.zoom_out()
-        self.alignedViewer.zoom_out()
+        #self.alignedViewer.zoom_out()
         self.fitToWindowAct.setChecked(False)
 
     # -- Slot for full size --
     @QtCore.Slot()
     def slot_full_size(self):
         self.imageViewer.full_size()
-        self.alignedViewer.full_size()
+        #self.alignedViewer.full_size()
         self.fitToWindowAct.setChecked(False)
  
     # -- Open images --
