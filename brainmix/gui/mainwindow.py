@@ -200,8 +200,13 @@ class MainWindow(QtGui.QMainWindow):
             self.data.set_filenames(files)
 
             # Load in the images
+            #self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
+
             self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
-           
+
+#            if type(self.data.get_image(0)) != numpy.uint8:
+#                print "
+            
             # Send the first image to the viewer
             self.imageViewer.set_image(self.data.get_current_image())
 
