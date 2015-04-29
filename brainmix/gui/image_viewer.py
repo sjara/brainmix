@@ -14,7 +14,6 @@ class ImageViewer(QtGui.QScrollArea):
     # -- init --
     def __init__(self, parent = None):
         super(ImageViewer, self).__init__(parent)
-
         self.scaleFactor = 1.0
         self.fitToWindow = False
         self.origSize = None
@@ -28,21 +27,23 @@ class ImageViewer(QtGui.QScrollArea):
         self.setBackgroundRole(QtGui.QPalette.Dark)
         self.setWidget(self.imageLabel);
         self.resize(500, 400)
+        self.initialized = False
 
     # -- Set the image --
     def set_image(self, image):
-        
         pixmap = QtGui.QPixmap.fromImage(numpy2qimage.numpy2qimage(image))
-        
-        self.origSize = pixmap.size()
+        if not self.initialized:
+            self.origSize = pixmap.size()
+            self.scaleFactor = 1.0
         self.imageLabel.setPixmap(pixmap)
-        self.scaleFactor = 1.0
-        if self.fitToWindow:
-            self.imageLabel.adjustSize()
-            self.resize_image()            
-        else:
-            self.scale_image(1.0)
-      
+        if not self.initialized:
+            if self.fitToWindow:
+                self.imageLabel.adjustSize()
+                self.resize_image()            
+            else:
+                self.scale_image(self.scaleFactor)
+            self.initialized = True
+       
     # -- Resize event -- 
     def resizeEvent(self, event):
         super(ImageViewer, self).resizeEvent(event)

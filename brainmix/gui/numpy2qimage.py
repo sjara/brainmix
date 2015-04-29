@@ -1,5 +1,6 @@
 '''
 Functions to convert from an ndarray to a QImage.
+Modified from:
 http://femr.googlecode.com/hg-history/e06e4336439755f075dc693acaffb72093fd8c45/src/contrib/qimage2ndarray.py
 '''
 import numpy as numpy
@@ -22,19 +23,22 @@ def gray2qimage(gray):
     Windows, the conversion into a QPixmap does not copy the data, so
     that you have to take care that the QImage does not get garbage
     collected (otherwise PyQt will throw away the wrapper, effectively
-    freeing the underlying memory - boom!)."""
+    freeing the underlying memory - boom!)."""   
     if len(gray.shape) != 2:
         raise ValueError("gray2QImage can only convert 2D arrays")
 
+    # If the type is not numpy.uint8, then convert by multiplying by 256
+    if type(gray[0][0]) == numpy.float64:      
+        gray = (gray * 256).astype(numpy.uint8)
+
     gray = numpy.require(gray, numpy.uint8, 'C')
     h, w = gray.shape
-
     result = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
     result.ndarray = gray
     for i in range(256):
         result.setColor(i, QtGui.QColor(i, i, i).rgb())
     return result
-
+    
 def rgb2qimage(rgb):
     """Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must
     have three dimensions with the vertical, horizontal and RGB image axes.

@@ -17,6 +17,11 @@ class Data():
         self.haveAligned = False
         
         self.currentImage = 0 # ?? Should this be here or in the GUI?
+
+        self.img1 = None
+        self.img2 = None
+        self.img3 = None
+        
        
     # -- Set the names of the image files --
     def set_filenames(self, files):
@@ -52,17 +57,16 @@ class Data():
     def get_aligned_images(self):
         return self.alignedImages
 
-
     # -------------------------------------- #
     # ?? -- Should this be in Data -- ??
     # -- Return the current aligned image --
-    def get_current_aligned_image(self):
+    def get_current_aligned_image(self):        
         return self.alignedImages[self.currentImage]
 
     # -- Return the current original image --
     def get_current_image(self):
         return self.images[self.currentImage]
-
+        
     # -- Increment the current image number --
     def increment_current_image(self):
         self.currentImage += 1

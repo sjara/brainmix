@@ -113,6 +113,7 @@ class MainWindow(QtGui.QMainWindow):
             self.regActs.append(act)
             methMenu.addAction(act)
             self.regActions.addAction(act)
+        self.regActs[0].setChecked(True)
             
         self.regAct = regMenu.addAction("In-Subject Registration", self.slot_register)
     
@@ -128,9 +129,7 @@ class MainWindow(QtGui.QMainWindow):
                     if "ITK" in self.savedRegMethod:
                         self.data.set_aligned_images(self.regFunctions[i](self.data.get_filenames()))
                     else:
-                        print "here"
                         images = self.regFunctions[i](self.data.get_images())
-                        print "done"
                         self.data.set_aligned_images(images)
                     aligned = True
 
@@ -201,9 +200,8 @@ class MainWindow(QtGui.QMainWindow):
             self.data.set_filenames(files)
 
             # Load in the images
-            #self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
-            self.data.set_images(skimage.io.ImageCollection(files).concatenate())
-        
+            self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
+           
             # Send the first image to the viewer
             self.imageViewer.set_image(self.data.get_current_image())
 
