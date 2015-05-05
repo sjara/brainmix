@@ -5,12 +5,15 @@ Written by
 Kristi Potter 2014-08-27
 University of Oregon
 '''
+import glob
+import os
+
 from PySide import QtCore 
 from PySide import QtGui
 
-from . import image_viewer
-
 import skimage.io
+
+from . import image_viewer
 from ..core import registration_modules
 from ..core import data
 
@@ -18,7 +21,7 @@ from ..core import data
 class MainWindow(QtGui.QMainWindow):
 
     # -- init --
-    def __init__(self, imagefiles=[], parent=None):
+    def __init__(self, inputdir=None, parent=None):
         super(MainWindow, self).__init__(parent)
 
         # Functional members
@@ -42,8 +45,9 @@ class MainWindow(QtGui.QMainWindow):
         # Intialize 
         self.init_ui()
 
-        # Open images if set from command line
-        if len(imagefiles)>0:
+        # Open images if input folder set on command line
+        if inputdir is not None:
+            imagefiles = glob.glob(os.path.join(inputdir,'*'))
             self.open_images(imagefiles)
       
     # -- Initialize the user interface --
