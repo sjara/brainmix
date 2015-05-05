@@ -18,7 +18,7 @@ from ..core import data
 class MainWindow(QtGui.QMainWindow):
 
     # -- init --
-    def __init__(self, parent = None):
+    def __init__(self, imagefiles=[], parent=None):
         super(MainWindow, self).__init__(parent)
 
         # Functional members
@@ -41,6 +41,10 @@ class MainWindow(QtGui.QMainWindow):
             
         # Intialize 
         self.init_ui()
+
+        # Open images if set from command line
+        if len(imagefiles)>0:
+            self.open_images(imagefiles)
       
     # -- Initialize the user interface --
     def init_ui(self):
@@ -79,7 +83,7 @@ class MainWindow(QtGui.QMainWindow):
         
         # File Menu
         fileMenu = menubar.addMenu('&File')
-        openFilesAction = fileMenu.addAction('&Open images',self.open_images)
+        openFilesAction = fileMenu.addAction('&Open images',self.open_images_dialog)
         openFilesAction.setShortcut('Ctrl+O')
         exitAction = fileMenu.addAction('&Quit',self.close)
         exitAction.setShortcut('Ctrl+Q')
@@ -207,7 +211,7 @@ class MainWindow(QtGui.QMainWindow):
         self.fitToWindowAct.setChecked(False)
  
     # -- Open images --
-    def open_images(self):
+    def open_images_dialog(self):
         '''
         Brings up a file chooser and signals when files are selected.
         Signal sends file names along.
@@ -217,6 +221,13 @@ class MainWindow(QtGui.QMainWindow):
                                                           "Select Input Images",
                                                           "/Users/kpotter/Data/Mouse/",
                                                           "Image Files(*.jpg *.png)")
+        self.open_images(files)
+
+    # -- Open images --
+    def open_images(self, files):
+        '''
+        Open images from files
+        '''
         if len(files) > 0:
             
             # Save the filenames

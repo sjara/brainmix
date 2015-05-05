@@ -17,14 +17,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--nogui', action='store_true',
                         help='Run application without a Graphical User Interface.')
+    parser.add_argument('-i', action='store', dest='inputImage',
+                        help='Image file to open on startup.')
     args = parser.parse_args()
 
     if args.nogui:
         print '[brainmix.py] This will run the application with no GUI.'
     else:
+        #print args.inputImage
         signal.signal(signal.SIGINT, signal.SIG_DFL) # Enable Ctrl-C
         app = QtGui.QApplication(sys.argv)
-        mainWindow = mainwindow.MainWindow()
+        mainWindow = mainwindow.MainWindow(imagefiles=[args.inputImage])
+        #mainWindow = mainwindow.MainWindow()
         mainWindow.show()
         sys.exit(app.exec_())
 
