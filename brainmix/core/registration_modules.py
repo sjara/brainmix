@@ -7,7 +7,7 @@ University of Oregon
 '''
 
 import sys
-sys.path.append("./Modules/")
+#sys.path.append("./modules/")
 #from PySide import QtCore 
 #from PySide import QtGui
 
@@ -32,7 +32,7 @@ except ImportError:
 # -- thunder --
 thunderLoded = True
 try:
-    import registration 
+    from ..modules import registration 
     methods.append("Thunder Registration")
     functions.append(registration.registration)
     
@@ -43,6 +43,7 @@ try:
 except ImportError:
     tunderLoaded = False
     print "Thunder Not loaded"
+    raise
 
 # ------ #    
 

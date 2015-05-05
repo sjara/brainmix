@@ -6,7 +6,7 @@ University of Oregon
 import sys
 from PySide import QtCore 
 from PySide import QtGui
-import numpy2qimage
+from . import numpy2qimage
 
 # - - - Widget to view a series of images - - -
 class ImageViewer(QtGui.QScrollArea):

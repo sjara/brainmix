@@ -8,11 +8,11 @@ University of Oregon
 from PySide import QtCore 
 from PySide import QtGui
 
-import image_viewer
+from . import image_viewer
 
 import skimage.io
-from core import registration_modules
-from core import data
+from ..core import registration_modules
+from ..core import data
 
 #- - - Main Window that holds all GUI pieces - - -#
 class MainWindow(QtGui.QMainWindow):
