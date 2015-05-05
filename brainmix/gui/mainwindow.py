@@ -123,7 +123,8 @@ class MainWindow(QtGui.QMainWindow):
             self.regActs.append(act)
             methMenu.addAction(act)
             self.regActions.addAction(act)
-        self.regActs[0].setChecked(True)
+        if len(self.regActs)>0:
+            self.regActs[0].setChecked(True)
             
         self.regAct = regMenu.addAction("In-Subject Registration", self.slot_register)
     
