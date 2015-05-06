@@ -7,6 +7,7 @@ University of Oregon
 '''
 import glob
 import os
+import numpy as np
 
 from PySide import QtCore 
 from PySide import QtGui
@@ -14,6 +15,7 @@ from PySide import QtGui
 import skimage.io
 
 from . import image_viewer
+from . import histogram
 from ..core import registration_modules
 from ..core import data
 
@@ -92,8 +94,14 @@ class MainWindow(QtGui.QMainWindow):
         exitAction = fileMenu.addAction('&Quit',self.close)
         exitAction.setShortcut('Ctrl+Q')
 
+        # Edit Menu
+        editMenu = menubar.addMenu('&Edit')
+        self.editHistogramAct = editMenu.addAction('Edit &histogram', 
+                                                   self.slot_edit_histogram)
+        self.editHistogramAct.setShortcut('Ctrl+H')
+
         # View Menu
-        viewMenu = menubar.addMenu('View')
+        viewMenu = menubar.addMenu('&View')
         self.showAlignedAct = QtGui.QAction("Show Aligned", self,checkable=True,
                                             shortcut="Ctrl+a", enabled=False,
                                             triggered=self.slot_show_aligned)
@@ -213,7 +221,23 @@ class MainWindow(QtGui.QMainWindow):
         self.imageViewer.full_size()
         #self.alignedViewer.full_size()
         self.fitToWindowAct.setChecked(False)
- 
+
+    # -- Slot for editing the intensity histogram --
+    @QtCore.Slot()
+    def slot_edit_histogram(self):
+        # -- Calculate histogram --
+        currentImage = self.data.get_current_image()
+        (histValues, binEdges) = np.histogram(currentImage,bins=256)
+        #bins = np.arange(256)
+        #hist = (20*(np.sin(2*np.pi/100*bins)+2)).astype(int)
+        #print np.unique(currentImage)
+        # -- Open histogram dialog --
+        self.imhist = histogram.HistogramView(histValues,binEdges[:-1])
+        print 'Open histogram'
+        self.imhist.show()
+        #self.imhist.raise()
+        #self.imhist.activateWindow()
+
     # -- Open images --
     def open_images_dialog(self):
         '''
