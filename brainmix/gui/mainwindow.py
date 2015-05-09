@@ -23,9 +23,7 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- Functional members --
         self.data = data.Data()  # Contains the image data
-        #self.regActs = []        # FIXME: ???
-        #self.regActions = []   # It will contain registration actions 
-        self.regActionGroup = QtGui.QActionGroup(self) # It will contain registration actions 
+        self.regActionGroup = QtGui.QActionGroup(self) # Registration actions 
 
         # -- Widget members --
         self.imageViewer = imageviewer.ImageViewer(self)
@@ -35,14 +33,6 @@ class MainWindow(QtGui.QMainWindow):
         self.regMethods = registration_modules.get_registration_methods() # List of names
         self.regFunctions = registration_modules.get_registration_functions()
         self.currentRegMethodIndex = None
-        #self.savedRegMethod = None # It will contain the registration method to use
-
-        '''
-        if len(self.regMethods) != 0:
-            self.savedRegMethod = self.regMethods[0]
-        else:
-            self.savedRegMethod = None
-        '''
 
         # -- Intialize graphical interface --
         self.init_ui()
@@ -183,11 +173,9 @@ class MainWindow(QtGui.QMainWindow):
     def slot_fit_to_window(self):
         '''Slot to handle fit to window action callback.'''
         if self.fitToWindowAct.isChecked():
-            self.imageViewer.fit_to_window(True)
-            #self.alignedViewer.fit_to_window(True)
+            self.imageViewer.resize_image_to_fit()
         else:
-            self.imageViewer.fit_to_window(False)
-            #self.alignedViewer.fit_to_window(False)
+            self.imageViewer.free_size()
 
     @QtCore.Slot()
     def slot_zoom_in(self):
@@ -227,7 +215,7 @@ class MainWindow(QtGui.QMainWindow):
             # -- Load in the images --
             self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
             # -- Send the first image to the viewer --
-            self.imageViewer.set_image(self.data.get_current_image())
+            self.imageViewer.initialize(self.data.get_current_image())
 
     # * * * * * * * EVENTS * * * * * * * *
     def closeEvent(self, event):
