@@ -1,80 +1,74 @@
 '''
-Data Structure, so far...
-Written by
-Kristi Potter 2014-08-29
-University of Oregon
+Main data structure to contain images stacks.
+
+Please see the AUTHORS file for credits.
 '''
 
-# - - - Data structure for our images - - -
 class Data():
-    
-    # -- init --
     def __init__(self):
+        '''
+        Data structure for images
+        '''
         self.fileNames = []
         self.images = []
         self.alignedImages = []
-        self.numImages = 0
+        self.nImages = 0
         self.haveAligned = False
         
         self.currentImage = 0 # ?? Should this be here or in the GUI?
 
-        self.img1 = None
-        self.img2 = None
-        self.img3 = None
-        
-       
-    # -- Set the names of the image files --
     def set_filenames(self, files):
+        '''Set the names of the image files'''
         self.fileNames = files
 
-    # -- Set the number of images and the original image data --
     def set_images(self, images):
-        self.numImages = len(images)
+        '''Set the number of images and the original image data'''
+        self.nImages = len(images)
         self.images = images
 
-    # -- Set the aligned images --
     def set_aligned_images(self, images):
+        '''Set the aligned images'''
         self.haveAligned = True
         self.alignedImages = images
 
-    # -- Return the filenames -- 
     def get_filenames(self):
+        '''Return the filenames'''
         return self.fileNames
 
-    # -- Return the number of images --
     def get_num_images(self):
-        return self.numImages
+        '''Return the number of images'''
+        return self.nImages
 
-    # -- Return if we have aligned images --
     def have_aligned(self):
+        '''Return if we have aligned images'''
         return self.haveAligned
 
-    # -- Return all of the original images --
     def get_images(self):
+        '''Return all of the original images'''
         return self.images
 
-    # -- Return all of the aligned images --
     def get_aligned_images(self):
+        '''Return all of the aligned images'''
         return self.alignedImages
 
     # -------------------------------------- #
-    # ?? -- Should this be in Data -- ??
-    # -- Return the current aligned image --
-    def get_current_aligned_image(self):        
+    # FIXME: Should this be in the Data class?
+    def get_current_aligned_image(self):
+        '''Return the current aligned image'''
         return self.alignedImages[self.currentImage]
 
-    # -- Return the current original image --
     def get_current_image(self):
+        '''Return the current original image'''
         return self.images[self.currentImage]
         
-    # -- Increment the current image number --
     def increment_current_image(self):
+        '''Increment the current image number'''
         self.currentImage += 1
-        if self.currentImage == self.numImages:
+        if self.currentImage == self.nImages:
             self.currentImage = 0
 
-    # -- Decrement the current image number --
     def decrement_current_image(self):
+        '''Decrement the current image number'''
         self.currentImage -= 1
         if self.currentImage < 0:
-            self.currentImage = self.numImages-1
+            self.currentImage = self.nImages-1
