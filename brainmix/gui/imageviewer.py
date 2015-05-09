@@ -1,18 +1,18 @@
 '''
 Image viewer rotates through a series of images
-Kristi Potter 2014-08-27
-University of Oregon
+
+Please see the AUTHORS file for credits.
 '''
 import sys
 from PySide import QtCore 
 from PySide import QtGui
 from . import numpy2qimage
 
-# - - - Widget to view a series of images - - -
 class ImageViewer(QtGui.QScrollArea):
-  
-    # -- init --
     def __init__(self, parent = None):
+        '''
+        Widget to view a stack of images
+        '''
         super(ImageViewer, self).__init__(parent)
         self.scaleFactor = 1.0
         self.fitToWindow = False
@@ -29,8 +29,10 @@ class ImageViewer(QtGui.QScrollArea):
         self.resize(500, 400)
         self.initialized = False
 
-    # -- Set the image --
     def set_image(self, image):
+        '''
+        Set the current image
+        '''
         pixmap = QtGui.QPixmap.fromImage(numpy2qimage.numpy2qimage(image))
         if not self.initialized:
             self.origSize = pixmap.size()
@@ -44,36 +46,35 @@ class ImageViewer(QtGui.QScrollArea):
                 self.scale_image(self.scaleFactor)
             self.initialized = True
        
-    # -- Resize event -- 
     def resizeEvent(self, event):
         super(ImageViewer, self).resizeEvent(event)
         if self.fitToWindow:
             self.resize_image()
 
-    # -- Resize the image to be the same width as the scroll area --
     def resize_image(self):
-        if self.imageLabel.pixmap() != None:
+        '''Resize the image to be the same width as the scroll area'''
+        if self.imageLabel.pixmap() is not None:
             pixSize = self.imageLabel.pixmap().size()
+            # FIXME: What factor to use (or pixels to subtract) to use the full window?
             pixSize.scale(self.size()*.9975, QtCore.Qt.KeepAspectRatio)
             self.scaleFactor = float(pixSize.width())/float(self.origSize.width())            
             self.imageLabel.setFixedSize(pixSize)
           
-    # -- Zoom in -- 
     def zoom_in(self):
         self.fit_to_window(False)
         self.scale_image(1.25)
         
-    # -- Zoom out --
     def zoom_out(self):
         self.fit_to_window(False)
         self.scale_image(0.8)
       
-    # -- Full size -- 
     def full_size(self):
         self.fit_to_window(False)
         self.scale_image(1.0/self.scaleFactor)
 
-    # -- Fit in the window -- 
+
+    ############ I GOT THIS FAR (SJ 20150508) ##########
+
     def fit_to_window(self, fit):
         self.fitToWindow = fit
         self.scrollArea.setWidgetResizable(self.fitToWindow)
