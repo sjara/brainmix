@@ -1,22 +1,17 @@
 '''
-RegistrationModules.py
-Class to manage the registration modules.
+Module to manage the registration modules.
 Add new modules here.
-Written by Kristi Potter, March 2015.
-University of Oregon
+
+Please see the AUTHORS file for credits.
 '''
 
 import sys
-#sys.path.append("./modules/")
-#from PySide import QtCore 
-#from PySide import QtGui
-
 
 # - Load in all registration modules - #
 methods = []
 functions = []
 
-# -- Dummy --
+# -- Dummy (return the original stack) --
 def dummy(img_stack): 
     return img_stack
 methods.append('Dummy')
@@ -27,10 +22,8 @@ itkLoaded = True
 try:
     import itk
     import itk_affine_registration
-
     methods.append("ITK Affine")
     functions.append(itk_affine_registration.itk_affine_registration)
-   
 except ImportError:
     itkLoaded = False
     print "ITK Methods not supported"
@@ -41,11 +34,6 @@ try:
     from ..modules import registration 
     methods.append("Thunder Registration")
     functions.append(registration.registration)
-    
-    #import main
-    #methods.append("Rigid")
-    #functions.append(main.registration)
-    
 except ImportError:
     tunderLoaded = False
     print "Thunder Not loaded"
@@ -55,7 +43,6 @@ except ImportError:
 
 def get_registration_methods():
     return methods
-    return [] # DEBUG
 
 def get_registration_functions():
     return functions
