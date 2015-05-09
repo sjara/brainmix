@@ -26,7 +26,8 @@ class MainWindow(QtGui.QMainWindow):
         self.regActionGroup = QtGui.QActionGroup(self) # Registration actions 
 
         # -- Widget members --
-        self.imageViewer = imageviewer.ImageViewer(self)
+        self.fitAtStart = True # Fit image to window at start (or not)
+        self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
         self.showAligned = False
 
         # -- Grab the registration methods --
@@ -112,6 +113,7 @@ class MainWindow(QtGui.QMainWindow):
                                             enabled=True, checkable=True,
                                             shortcut='Ctrl+F',
                                             triggered=self.slot_fit_to_window)
+        self.fitToWindowAct.setChecked(self.fitAtStart)
         viewMenu.addAction(self.fitToWindowAct)
        
         # -- Registration Menu --

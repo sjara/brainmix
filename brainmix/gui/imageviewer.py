@@ -9,16 +9,19 @@ from PySide import QtGui
 from . import numpy2qimage
 
 class ImageViewer(QtGui.QScrollArea):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None, fit=True):
         '''
         Widget to view a stack of images.
 
         ImageViewer contains a QLabel in which the image is painted.
         This QLabel will change size according to the user's commands.
+
+        PARAMETERS:
+        fit: [Boolean] start with image fit to window or not.
         '''
         super(ImageViewer, self).__init__(parent)
         self.scaleFactor = 1.0
-        self.fitToWindow = True
+        self.fitToWindow = fit
         self.origSize = None
         
         self.imageLabel = QtGui.QLabel()
