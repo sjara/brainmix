@@ -81,6 +81,7 @@ class ImageViewer(QtGui.QScrollArea):
             self.resize_image()
         else:
             self.imageLabel.setMaximumSize(QtCore.QSize(16777215, 16777215))
+            self.imageLabel.setMinimumSize(QtCore.QSize(0,0))
             
     # -- Scale the image -- 
     def scale_image(self, factor):
