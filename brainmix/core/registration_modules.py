@@ -16,6 +16,12 @@ import sys
 methods = []
 functions = []
 
+# -- Dummy --
+def dummy(img_stack): 
+    return img_stack
+methods.append('Dummy')
+functions.append(dummy)
+
 # -- ITK --
 itkLoaded = True
 try:
@@ -49,6 +55,7 @@ except ImportError:
 
 def get_registration_methods():
     return methods
+    return [] # DEBUG
 
 def get_registration_functions():
     return functions

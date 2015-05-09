@@ -2,8 +2,8 @@
 
 '''
 BrainMix 
-Written by Kristi Potter (2015-03-11)
-Modified by Santiago Jaramillo (2015-04-10)
+
+Please see the AUTHORS file for credits.
 '''
 
 import sys
