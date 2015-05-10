@@ -14,17 +14,19 @@ class Data():
         self.alignedImages = []
         self.nImages = 0
         self.haveAligned = False
-        
+        self.bitDepth = None
+
         self.currentImage = 0 # ?? Should this be here or in the GUI?
 
     def set_filenames(self, files):
         '''Set the names of the image files'''
         self.fileNames = files
 
-    def set_images(self, images):
+    def set_images(self, images, bitdepth=8):
         '''Set the number of images and the original image data'''
         self.nImages = len(images)
         self.images = images
+        self.bitDepth = bitdepth
 
     def set_aligned_images(self, images):
         '''Set the aligned images'''
@@ -46,6 +48,10 @@ class Data():
     def get_images(self):
         '''Return all of the original images'''
         return self.images
+
+    def get_bitdepth(self):
+        '''Return all of the original images'''
+        return self.bitdepth
 
     def get_aligned_images(self):
         '''Return all of the aligned images'''

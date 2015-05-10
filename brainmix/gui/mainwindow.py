@@ -12,6 +12,7 @@ import skimage.io
 from . import imageviewer
 from ..core import registration_modules
 from ..core import data
+from ..modules import czifile
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -215,9 +216,38 @@ class MainWindow(QtGui.QMainWindow):
             # -- Save the filenames --
             self.data.set_filenames(files)
             # -- Load in the images --
-            self.data.set_images(skimage.io.ImageCollection(files, as_grey=True).concatenate())
+            imageCollection = skimage.io.ImageCollection(files, as_grey=True, 
+                                                         load_func=self.img_load_func)
+            if imageCollection[0].dtype=='uint16':
+                # FIXME: this assumes 16bit images are really 12bit (true for LISB scope)
+                bitdepth = 12
+            else:
+                bitdepth = 8
+            # FIXME: the bitdepth is not used yet by other functions.
+            #        We need to use it when converting to QImage
+            self.data.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
             # -- Send the first image to the viewer --
             self.imageViewer.initialize(self.data.get_current_image())
+
+    def img_load_func(self,imgfile,as_grey=False):
+        '''
+        A function that allows loading files of different formats
+        '''
+        fileName,fileExt = os.path.splitext(imgfile)
+        if fileExt.lower() == '.czi':
+            czi = czifile.CziFile(imgfile)
+            image4D = czi.asarray()
+            if as_grey:
+                image = image4D[0,:,:,0] # 2D (taking only first channel)
+            else:
+                raise TypeError('Loading multichannel images has not been implemented.')
+                #image = np.rollaxis(image4D,0,3)[:,:,:,0] # 3D
+            ###image2D = (image2D/16).astype(np.uint8)
+            ### For 3D images: np.rollaxis(image4D,0,3)[:,:,:,0]
+            return image
+        else:
+            return skimage.io.imread(imgfile,as_grey)
+
 
     # * * * * * * * EVENTS * * * * * * * *
     def closeEvent(self, event):
