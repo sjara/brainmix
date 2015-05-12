@@ -15,6 +15,41 @@ def numpy2qimage(array):
     raise ValueError("can only convert 2D or 3D arrays")
 
 def gray2qimage(gray):
+    '''
+    Convert numpy array to QtImage
+    '''
+    if len(gray.shape) != 2:
+        raise ValueError("gray2QImage can only convert 2D arrays")
+
+    h, w = gray.shape
+    if gray.dtype == numpy.uint8:
+        gray = numpy.require(gray, numpy.uint8, 'C')
+        result = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
+        result.ndarray = gray
+        for i in range(256):
+            result.setColor(i, QtGui.QColor(i, i, i).rgb())
+    elif gray.dtype == numpy.uint16:
+        # This assumes that a 16bit image is only 12bit resolution: 2^16-2^12=16
+        gray = (gray/16).astype(numpy.uint8)
+        gray = numpy.require(gray, numpy.uint8, 'C')
+        h, w = gray.shape
+        result = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
+        result.ndarray = gray
+        #for i in range(256):
+        #    result.setColor(i, QtGui.QColor(i, i, i).rgb())
+    else:
+        # Convert by multiplying by 256 and making it uint8
+        gray = (gray * 256).astype(numpy.uint8)
+        gray = numpy.require(gray, numpy.uint8, 'C')
+        h, w = gray.shape
+        result = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
+        result.ndarray = gray
+        for i in range(256):
+            result.setColor(i, QtGui.QColor(i, i, i).rgb())
+    return result
+
+
+def OLDgray2qimage(gray):
     """Convert the 2D numpy array `gray` into a 8-bit QImage with a gray
     colormap.  The first dimension represents the vertical image axis.
     

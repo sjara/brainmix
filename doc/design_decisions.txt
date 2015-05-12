@@ -1,7 +1,17 @@
 
  DESIGN DECISIONS
 
-* brainmix.py should not use a function BrainMix().
+* Why use the @QtCore.Slot() decorator?
+  It seems like it "has the advantage of reducing the amount of memory used and is slightly faster."
+  http://stackoverflow.com/questions/14421897/is-the-pyside-slot-decorator-necessary
+  [SJ 2015-05-08]
+
+* The main script cannot be called brainmix.py (we call it brainmixapp.py instead).
+  Because we want to be able to say: from brainmix.core import SOMETHING
+  and Python would think you refer to the script, not the brainmix package.
+  [SJ 2015-05-05]
+
+* The main script (brainmix.py) should not use a function BrainMix().
   By running the app on the global workspace, we can do introspection of the graphical objects
   during an interactive session (for debugging)
   [SJ 2015-04-10] 
@@ -9,5 +19,5 @@
 * The module optparse is deprecated
   https://docs.python.org/2/library/optparse.html
   Use argparse instead
-
+  [SJ 2015-04-10] 
 
