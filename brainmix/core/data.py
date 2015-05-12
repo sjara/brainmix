@@ -16,8 +16,6 @@ class Data():
         self.haveAligned = False
         self.bitDepth = None
 
-        self.currentImage = 0 # ?? Should this be here or in the GUI?
-
     def set_filenames(self, files):
         '''Set the names of the image files'''
         self.fileNames = files
@@ -49,16 +47,25 @@ class Data():
         '''Return all of the original images'''
         return self.images
 
+    def get_image(self,ind):
+        '''Return all of the original images'''
+        return self.images[ind]
+
     def get_bitdepth(self):
         '''Return all of the original images'''
-        return self.bitdepth
+        return self.bitDepth
 
     def get_aligned_images(self):
         '''Return all of the aligned images'''
         return self.alignedImages
 
+    def get_aligned_image(self,ind):
+        '''Return all of the aligned images'''
+        return self.alignedImages[ind]
+
     # -------------------------------------- #
     # FIXME: Should this be in the Data class?
+    """
     def get_current_aligned_image(self):
         '''Return the current aligned image'''
         return self.alignedImages[self.currentImage]
@@ -78,3 +85,4 @@ class Data():
         self.currentImage -= 1
         if self.currentImage < 0:
             self.currentImage = self.nImages-1
+    """

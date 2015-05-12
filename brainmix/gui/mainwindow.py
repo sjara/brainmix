@@ -18,6 +18,9 @@ from ..modules import czifile
 
 
 class MainWindow(QtGui.QMainWindow):
+    # -- Create signals --
+    updateImage = QtCore.Signal(int) # Send the image index
+
     def __init__(self, inputdir=None, parent=None):
         '''
         Main window that holds all GUI pieces.
@@ -27,6 +30,7 @@ class MainWindow(QtGui.QMainWindow):
         # -- Functional members --
         self.data = data.Data()  # Contains the image data
         self.regActionGroup = QtGui.QActionGroup(self) # Registration actions 
+        self.currentImageInd = 0 # ?? Should this be here or in the GUI?
 
         # -- Widget members --
         self.fitAtStart = True # Fit image to window at start (or not)
@@ -65,15 +69,26 @@ class MainWindow(QtGui.QMainWindow):
     #signal_image_files = QtCore.Signal( (list,) )
     #signal_volume_file = QtCore.Signal( (str,) ) 
 
+    def increment_current_image(self):
+        '''Increment the current image number'''
+        self.currentImageInd += 1
+        if self.currentImageInd == self.data.nImages:
+            self.currentImageInd = 0
+
+    def decrement_current_image(self):
+        '''Decrement the current image number'''
+        self.currentImageInd -= 1
+        if self.currentImageInd < 0:
+            self.currentImageInd = self.data.nImages-1
+
     def set_image(self):
         '''
         Set the current image.
         '''
-        #self.imageViewer.set_image(self.data.get_current_image())
         if self.showAligned:
-            self.imageViewer.set_image(self.data.get_current_aligned_image())
+            self.imageViewer.set_image(self.data.get_aligned_image(self.currentImageInd))
         else:
-            self.imageViewer.set_image(self.data.get_current_image())
+            self.imageViewer.set_image(self.data.get_image(self.currentImageInd))
         #if self.data.have_aligned():
         #    self.alignedViewer.set_image(self.data.get_current_aligned_image())
 
@@ -210,17 +225,18 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def slot_edit_histogram(self):
         '''Estimate and show histogram.'''
-        currentImage = self.data.get_current_image()
+        currentImage = self.data.get_image(self.currentImageInd)
+        bitDepth = self.data.get_bitdepth()
+        '''
         (histValues, binEdges) = np.histogram(currentImage,bins=256)
         #bins = np.arange(256)
         #hist = (20*(np.sin(2*np.pi/100*bins)+2)).astype(int)
         #print np.unique(currentImage)
+        '''
         # -- Open histogram dialog --
-        self.imhist = histogram.HistogramView(histValues,binEdges[:-1])
-        print 'Open histogram'
+        self.imhist = histogram.HistogramView()
+        self.imhist.set_data(currentImage,bitDepth)
         self.imhist.show()
-        #self.imhist.raise()
-        #self.imhist.activateWindow()
 
     def open_images_dialog(self):
         '''
@@ -251,7 +267,7 @@ class MainWindow(QtGui.QMainWindow):
             #        We need to use it when converting to QImage
             self.data.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
             # -- Send the first image to the viewer --
-            self.imageViewer.initialize(self.data.get_current_image())
+            self.imageViewer.initialize(self.data.get_image(self.currentImageInd))
 
     def img_load_func(self,imgfile,as_grey=False):
         '''
@@ -288,9 +304,11 @@ class MainWindow(QtGui.QMainWindow):
         '''
         key = event.key()
         if key == QtCore.Qt.Key_Left:
-            self.data.decrement_current_image()
+            self.decrement_current_image()
             self.set_image()
+            # FIXME: this should send a signal, not execute a method
+            #self.updateImage.emit()
         elif key == QtCore.Qt.Key_Right:
-            self.data.increment_current_image()
+            self.increment_current_image()
             self.set_image()
         event.accept()

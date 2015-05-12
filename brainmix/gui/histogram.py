@@ -1,5 +1,9 @@
 '''
 Widget to edit the pixel-intensity histogram of images.
+
+
+Currently (during development), this class does it all:
+calculate histogram, show it, edit it.
 '''
 
 from PySide import QtGui
@@ -17,12 +21,25 @@ class HistogramView(QtGui.QWidget):
         super(HistogramView, self).__init__(parent)
         self.hist = hist
         self.bins = bins
-        self.nBins = len(bins)
-        #self.setMinimumWidth(200)
-        #self.setMinimumHeight(100)
-        #self.setMaximumWidth(300)
-        #self.setMaximumHeight(200)
+        self.setMinimumWidth(200)
+        self.setMinimumHeight(100)
+        self.setMaximumWidth(300)
+        self.setMaximumHeight(200)
         self.boundPos = [100,200]
+
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close,
+                        context=QtCore.Qt.WidgetShortcut)
+
+    def set_data(self,image,nbins):
+        '''Calculate histogram and show it, given image data'''
+        (histValues, binEdges) = np.histogram(image,bins=256)
+        self.hist = histValues
+        self.bins = binEdges[:-1]
+        #bins = np.arange(256)
+        #hist = (20*(np.sin(2*np.pi/100*bins)+2)).astype(int)
+        #print np.unique(currentImage)
+        # -- Open histogram dialog --
+        
 
     def transform_coords(self,xval,yval):
         '''
@@ -37,15 +54,17 @@ class HistogramView(QtGui.QWidget):
     def paintEvent(self, e):
         qp = QtGui.QPainter()
         qp.begin(self)
-        self.draw_hist(qp)
-        self.draw_bound(qp,1)
+        if len(self.bins):
+            self.draw_hist(qp)
+            self.draw_bound(qp,1)
         qp.end()
 
     def draw_bound(self,qp,ind):
         boundColor = QtGui.QColor(200,200,220,128)
         qp.setPen(QtCore.Qt.NoPen)
         qp.setBrush(boundColor)
-        width = self.width() * self.boundPos[ind]/self.nBins
+        nBins = len(self.bins)
+        width = self.width() * self.boundPos[ind]/nBins
         height = self.height()
         if ind==0:
             qp.drawRect(0,0,width,height)
@@ -71,3 +90,4 @@ class HistogramView(QtGui.QWidget):
             histPoints.append(ptf(oneHval,oneVval))
             
         qp.drawPolygon(histPoints)
+
