@@ -50,7 +50,7 @@ class MainWindow(QtGui.QMainWindow):
         '''
         Initialize the graphical user interface.
         '''
-        self.setWindowTitle("BrainMix")
+        self.setWindowTitle('BrainMix')
         self.resize(500, 400)
         self.create_menus()
 
@@ -98,8 +98,8 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- View Menu --
         viewMenu = menubar.addMenu('&View')
-        self.showAlignedAct = QtGui.QAction("Show Aligned", self,checkable=True,
-                                            shortcut="Ctrl+a", enabled=False,
+        self.showAlignedAct = QtGui.QAction('Show Aligned', self,checkable=True,
+                                            shortcut='Ctrl+a', enabled=False,
                                             triggered=self.slot_show_aligned)
         viewMenu.addAction(self.showAlignedAct)
         viewMenu.addSeparator()
