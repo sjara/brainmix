@@ -36,7 +36,8 @@ class MainWindow(QtGui.QMainWindow):
         self.fitAtStart = True # Fit image to window at start (or not)
         self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
         self.showAligned = False
-
+        self.imhist = histogram.HistogramView()
+        
         # -- Grab the registration methods --
         self.regMethods = registration_modules.get_registration_methods() # List of names
         self.regFunctions = registration_modules.get_registration_functions()
@@ -44,6 +45,9 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- Intialize graphical interface --
         self.init_ui()
+
+        # -- Connect signals --
+        
 
         # -- Open images if input folder set on command line --
         if inputdir is not None:
@@ -234,9 +238,10 @@ class MainWindow(QtGui.QMainWindow):
         #print np.unique(currentImage)
         '''
         # -- Open histogram dialog --
-        self.imhist = histogram.HistogramView()
         self.imhist.set_data(currentImage,bitDepth)
+        self.imhist.update() # FIXME: necessary because if it's open it won't update
         self.imhist.show()
+
 
     def open_images_dialog(self):
         '''
@@ -308,7 +313,9 @@ class MainWindow(QtGui.QMainWindow):
             self.set_image()
             # FIXME: this should send a signal, not execute a method
             #self.updateImage.emit()
+            #self.slot_edit_histogram()
         elif key == QtCore.Qt.Key_Right:
             self.increment_current_image()
             self.set_image()
+            #self.slot_edit_histogram()
         event.accept()
