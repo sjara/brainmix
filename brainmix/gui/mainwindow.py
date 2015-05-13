@@ -4,60 +4,42 @@ Main Qt Window for BrainMix.
 Please see the AUTHORS file for credits.
 '''
 
-import glob
-import os
-import numpy as np
+#import numpy as np
 from PySide import QtCore 
 from PySide import QtGui
-import skimage.io
 from . import histogram
 from . import imageviewer
-from ..core import registration_modules
-from ..core import data
-from ..modules import czifile
-
 
 class MainWindow(QtGui.QMainWindow):
     # -- Create signals --
-    updateImage = QtCore.Signal(int) # Send the image index
+    #updateImage = QtCore.Signal(int) # Send the image index
+    #setRegistrationMethod = QtCore.Signal(int) # Set registration method by index
 
-    def __init__(self, inputdir=None, parent=None):
-        '''
-        Main window that holds all GUI pieces.
-        '''
+    def __init__(self, session=None, parent=None):
+        '''Main window that holds all GUI pieces.'''
         super(MainWindow, self).__init__(parent)
 
         # -- Functional members --
-        self.data = data.Data()  # Contains the image data
+        self.session = session
         self.regActionGroup = QtGui.QActionGroup(self) # Registration actions 
-        self.currentImageInd = 0 # ?? Should this be here or in the GUI?
+        self.fitAtStart = True # Fit image to window at start (or not)
 
         # -- Widget members --
-        self.fitAtStart = True # Fit image to window at start (or not)
         self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
-        self.showAligned = False
         self.imhist = histogram.HistogramView()
         
-        # -- Grab the registration methods --
-        self.regMethods = registration_modules.get_registration_methods() # List of names
-        self.regFunctions = registration_modules.get_registration_functions()
-        self.currentRegMethodIndex = None
-
         # -- Intialize graphical interface --
         self.init_ui()
 
-        # -- Connect signals --
-        
+        # -- If session already has images, show them --
+        if session.loaded:
+            # FIXME: initialize should be automatic inside imageViewer
+            #        maybe by checking a flag (reset when loading data)
+            self.imageViewer.initialize(self.session.get_current_image())
+            self.set_image()
 
-        # -- Open images if input folder set on command line --
-        if inputdir is not None:
-            imagefiles = glob.glob(os.path.join(inputdir,'*'))
-            self.open_images(imagefiles)
-      
     def init_ui(self):
-        '''
-        Initialize the graphical user interface.
-        '''
+        '''Initialize the graphical user interface.'''
         self.setWindowTitle('BrainMix')
         self.resize(500, 400)
         self.create_menus()
@@ -69,37 +51,15 @@ class MainWindow(QtGui.QMainWindow):
         layout.addWidget(self.imageViewer)
         self.setCentralWidget(mainWidget)
 
-    # -- Signals --  FIXME: Do we need these? And why are they indented this way?
-    #signal_image_files = QtCore.Signal( (list,) )
-    #signal_volume_file = QtCore.Signal( (str,) ) 
-
-    def increment_current_image(self):
-        '''Increment the current image number'''
-        self.currentImageInd += 1
-        if self.currentImageInd == self.data.nImages:
-            self.currentImageInd = 0
-
-    def decrement_current_image(self):
-        '''Decrement the current image number'''
-        self.currentImageInd -= 1
-        if self.currentImageInd < 0:
-            self.currentImageInd = self.data.nImages-1
-
     def set_image(self):
-        '''
-        Set the current image.
-        '''
-        if self.showAligned:
-            self.imageViewer.set_image(self.data.get_aligned_image(self.currentImageInd))
+        '''Set the current image.'''
+        if self.showAlignedAct.isChecked():
+            self.imageViewer.set_image(self.session.get_current_image(aligned=True))
         else:
-            self.imageViewer.set_image(self.data.get_image(self.currentImageInd))
-        #if self.data.have_aligned():
-        #    self.alignedViewer.set_image(self.data.get_current_aligned_image())
+            self.imageViewer.set_image(self.session.get_current_image())
 
     def create_menus(self):
-        '''
-        Create the application menus.
-        '''
+        '''Create the application menus.'''
         menubar = self.menuBar()
         
         # -- File Menu --
@@ -149,55 +109,37 @@ class MainWindow(QtGui.QMainWindow):
                                           enabled=False, triggered=self.slot_register)
         regMenu = menubar.addMenu('Registration')
         methMenu = regMenu.addMenu('Methods')
-        for oneRegMethod in self.regMethods:
+        for oneRegMethod in self.session.regMethods:
             act = QtGui.QAction(oneRegMethod, self, checkable=True,
                                 triggered=self.slot_switch_reg_methods) 
             methMenu.addAction(act)
             self.regActionGroup.addAction(act)
-        if len(self.regMethods)>0:
+        if len(self.session.regMethods)>0:
             self.regActionGroup.actions()[0].setChecked(True)
-            #self.savedRegMethod = self.regMethods[0]
-            self.currentRegMethodIndex = 0
+            self.session.set_registration_method(0)
             self.inSubjectAct.setEnabled(True)
         regMenu.addAction(self.inSubjectAct)
     
     @QtCore.Slot()
     def slot_register(self):
-        '''
-        Slot for image registration
-        '''
-        aligned = False
-        regFunction = self.regFunctions[self.currentRegMethodIndex]
-
-        # FIXME: at some point we need to remove ITK option
-        # FIXME: also, ITK option does not set aligned flag?
-        if 'ITK' in self.regMethods[self.currentRegMethodIndex]:
-            # -- If this is an itk method, send image filenames --
-            self.data.set_aligned_images(regFunction(self.data.get_filenames()))
-        else:
-            regimages = regFunction(self.data.get_images())
-            self.data.set_aligned_images(regimages)
-            aligned = True
-            self.showAligned = True
-
-        if aligned:
-            self.showAlignedAct.setEnabled(True)
-            self.showAlignedAct.setChecked(True)
-            #self.alignedViewer.set_image(self.data.get_current_aligned_image())
-        else:
-            print 'No Registation Methods!'
+        '''Slot for image registration'''
+        self.session.register_stack()
+        self.set_image()
+        self.showAlignedAct.setEnabled(True)
+        self.showAlignedAct.setChecked(True)
 
     @QtCore.Slot()
     def slot_switch_reg_methods(self):
         '''Slot for switching registration method'''
-        assert len(self.regMethods) > 0
+        assert len(self.session.regMethods) > 0
         checkedAction = self.regActionGroup.checkedAction()
-        self.currentRegMethodIndex = self.regActionGroup.actions().index(checkedAction)
+        currentRegMethodIndex = self.regActionGroup.actions().index(checkedAction)
+        self.session.set_registration_method(currentRegMethodIndex)
 
     @QtCore.Slot()
     def slot_show_aligned(self):
         '''Slot for showing the aligned images'''
-        self.showAligned = self.showAlignedAct.isChecked()
+        # The method self.set_image will know if showAligned has been checked.
         self.set_image()
             
     @QtCore.Slot()
@@ -211,26 +153,23 @@ class MainWindow(QtGui.QMainWindow):
     @QtCore.Slot()
     def slot_zoom_in(self):
         self.imageViewer.zoom_in()
-        #self.alignedViewer.zoom_in()
         self.fitToWindowAct.setChecked(False)
 
     @QtCore.Slot()
     def slot_zoom_out(self):
         self.imageViewer.zoom_out()
-        #self.alignedViewer.zoom_out()
         self.fitToWindowAct.setChecked(False)
 
     @QtCore.Slot()
     def slot_full_size(self):
         self.imageViewer.full_size()
-        #self.alignedViewer.full_size()
         self.fitToWindowAct.setChecked(False)
 
     @QtCore.Slot()
     def slot_edit_histogram(self):
         '''Estimate and show histogram.'''
-        currentImage = self.data.get_image(self.currentImageInd)
-        bitDepth = self.data.get_bitdepth()
+        currentImage = self.session.get_current_image()
+        bitDepth = self.session.origImages.bitDepth
         '''
         (histValues, binEdges) = np.histogram(currentImage,bins=256)
         #bins = np.arange(256)
@@ -251,47 +190,8 @@ class MainWindow(QtGui.QMainWindow):
         '''
         files, filtr = QtGui.QFileDialog.getOpenFileNames(self,'Select Input Images',
                                                           '/tmp/','Image Files(*.jpg *.png)')
-        self.open_images(files)
-
-    def open_images(self, files):
-        '''
-        Open images from files
-        '''
-        if len(files) > 0:
-            # -- Save the filenames --
-            self.data.set_filenames(files)
-            # -- Load in the images --
-            imageCollection = skimage.io.ImageCollection(files, as_grey=True, 
-                                                         load_func=self.img_load_func)
-            if imageCollection[0].dtype=='uint16':
-                # FIXME: this assumes 16bit images are really 12bit (true for LISB scope)
-                bitdepth = 12
-            else:
-                bitdepth = 8
-            # FIXME: the bitdepth is not used yet by other functions.
-            #        We need to use it when converting to QImage
-            self.data.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
-            # -- Send the first image to the viewer --
-            self.imageViewer.initialize(self.data.get_image(self.currentImageInd))
-
-    def img_load_func(self,imgfile,as_grey=False):
-        '''
-        A function that allows loading files of different formats
-        '''
-        fileName,fileExt = os.path.splitext(imgfile)
-        if fileExt.lower() == '.czi':
-            czi = czifile.CziFile(imgfile)
-            image4D = czi.asarray()
-            if as_grey:
-                image = image4D[0,:,:,0] # 2D (taking only first channel)
-            else:
-                raise TypeError('Loading multichannel images has not been implemented.')
-                #image = np.rollaxis(image4D,0,3)[:,:,:,0] # 3D
-            ###image2D = (image2D/16).astype(np.uint8)
-            ### For 3D images: np.rollaxis(image4D,0,3)[:,:,:,0]
-            return image
-        else:
-            return skimage.io.imread(imgfile,as_grey)
+        self.session.open_images(files)
+        self.imageViewer.initialize(self.session.get_current_image())
 
 
     # * * * * * * * EVENTS * * * * * * * *
@@ -309,13 +209,13 @@ class MainWindow(QtGui.QMainWindow):
         '''
         key = event.key()
         if key == QtCore.Qt.Key_Left:
-            self.decrement_current_image()
+            self.session.decrement_current_image()
             self.set_image()
-            # FIXME: this should send a signal, not execute a method
+            # FIXME: maybe this should send a signal (e.g., to update histogram)
             #self.updateImage.emit()
             #self.slot_edit_histogram()
         elif key == QtCore.Qt.Key_Right:
-            self.increment_current_image()
+            self.session.increment_current_image()
             self.set_image()
             #self.slot_edit_histogram()
         event.accept()

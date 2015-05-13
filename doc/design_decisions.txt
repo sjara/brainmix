@@ -1,6 +1,16 @@
 
  DESIGN DECISIONS
 
+* We don't use set/get methods if accessing the attribute directly is sufficient.
+  For explanations on why this is ok in Python, see:
+  http://stackoverflow.com/questions/2579840/do-you-use-the-get-set-pattern-in-python
+  [SJ 2015-05-12]
+
+* Santiago started exploring the possibility of making the application
+  with a Model-View-Controller design. See example here:
+  http://stackoverflow.com/questions/26698628/mvc-design-with-qtdesigner-and-pyside
+  [SJ 2015-05-12]
+
 * Why use the @QtCore.Slot() decorator?
   It seems like it "has the advantage of reducing the amount of memory used and is slightly faster."
   http://stackoverflow.com/questions/14421897/is-the-pyside-slot-decorator-necessary

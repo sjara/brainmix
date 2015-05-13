@@ -17,6 +17,7 @@ def dummy(img_stack):
 methods.append('Dummy')
 functions.append(dummy)
 
+'''
 # -- ITK --
 itkLoaded = True
 try:
@@ -27,9 +28,10 @@ try:
 except ImportError:
     itkLoaded = False
     print "ITK Methods not supported"
+'''
 
 # -- thunder --
-thunderLoded = True
+thunderLoaded = True
 try:
     from ..modules import registration 
     methods.append("Thunder Registration")

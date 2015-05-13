@@ -25,7 +25,7 @@ class HistogramView(QtGui.QWidget):
         self.setMinimumHeight(100)
         self.setMaximumWidth(300)
         self.setMaximumHeight(200)
-        self.boundPos = [100,200]
+        self.boundPos = [0,300]
 
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close,
                         context=QtCore.Qt.WidgetShortcut)

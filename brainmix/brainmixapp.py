@@ -12,6 +12,7 @@ import signal  # To enable Ctrl-C to quit application from terminal
 import argparse
 from PySide import QtGui
 from brainmix.gui import mainwindow
+from brainmix.core import session
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -26,7 +27,8 @@ if __name__ == '__main__':
     else:
         signal.signal(signal.SIGINT, signal.SIG_DFL) # Enable Ctrl-C
         app = QtGui.QApplication(sys.argv)
-        mainWindow = mainwindow.MainWindow(inputdir=args.inputDir)
+        mainSession = session.Session(inputdir=args.inputDir)
+        mainWindow = mainwindow.MainWindow(mainSession)
         mainWindow.show()
         sys.exit(app.exec_())
 
