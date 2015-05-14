@@ -26,7 +26,7 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- Widget members --
         self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
-        self.imhist = histogram.HistogramView()
+        self.imhist = histogram.HistogramView() # If parent=self, it will be non-window child
         
         # -- Intialize graphical interface --
         self.init_ui()
@@ -72,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
         # -- Edit Menu --
         editMenu = menubar.addMenu('&Edit')
         self.editHistogramAct = editMenu.addAction('Edit &histogram', 
-                                                   self.slot_edit_histogram)
+                                                   self.slot_open_histogram)
         self.editHistogramAct.setShortcut('Ctrl+H')
 
         # -- View Menu --
@@ -166,10 +166,12 @@ class MainWindow(QtGui.QMainWindow):
         self.fitToWindowAct.setChecked(False)
 
     @QtCore.Slot()
-    def slot_edit_histogram(self):
+    def slot_open_histogram(self):
         '''Estimate and show histogram.'''
-        currentImage = self.session.get_current_image()
-        bitDepth = self.session.origImages.bitDepth
+        self.imhist.show()
+        self.update_histogram()
+        #currentImage = self.session.get_current_image()
+        #bitDepth = self.session.origImages.bitDepth
         '''
         (histValues, binEdges) = np.histogram(currentImage,bins=256)
         #bins = np.arange(256)
@@ -177,10 +179,14 @@ class MainWindow(QtGui.QMainWindow):
         #print np.unique(currentImage)
         '''
         # -- Open histogram dialog --
-        self.imhist.set_data(currentImage,bitDepth)
-        self.imhist.update() # FIXME: necessary because if it's open it won't update
-        self.imhist.show()
+        #self.imhist.show()
+        #self.imhist.set_data(currentImage,2**bitDepth)
 
+    def update_histogram(self):
+        '''Estimate and update histogram.'''
+        currentImage = self.session.get_current_image()
+        bitDepth = self.session.origImages.bitDepth
+        self.imhist.set_data(currentImage,2**bitDepth)
 
     def open_images_dialog(self):
         '''
@@ -201,6 +207,7 @@ class MainWindow(QtGui.QMainWindow):
         This method is inherited from QtGui.QMainWindow, which explains
         its camelCase naming.
         '''
+        self.imhist.close()
         event.accept()
           
     def keyPressEvent(self, event):
@@ -213,9 +220,9 @@ class MainWindow(QtGui.QMainWindow):
             self.set_image()
             # FIXME: maybe this should send a signal (e.g., to update histogram)
             #self.updateImage.emit()
-            #self.slot_edit_histogram()
+            self.update_histogram()
         elif key == QtCore.Qt.Key_Right:
             self.session.increment_current_image()
             self.set_image()
-            #self.slot_edit_histogram()
+            self.update_histogram()
         event.accept()
