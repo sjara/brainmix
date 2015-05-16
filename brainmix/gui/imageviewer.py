@@ -28,6 +28,7 @@ class ImageViewer(QtGui.QScrollArea):
         self.imageLabel.setBackgroundRole(QtGui.QPalette.Base)
         self.imageLabel.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
         self.imageLabel.setScaledContents(True)
+        #self.imageLabel.setAlignment(QtCore.Qt.AlignCenter) # FIXME: Does not align image to scroll area
 
         self.setBackgroundRole(QtGui.QPalette.Dark)
         self.setWidget(self.imageLabel)
@@ -97,3 +98,22 @@ class ImageViewer(QtGui.QScrollArea):
     def keyPressEvent(self, event):
         '''Forward key presses to the parent'''
         event.ignore() # Necessary to let the parent take care of key events
+
+    def mousePressEvent(self, event):
+        print "from ImageViewer.mousePressEvent"
+        #vbar = self.verticalScrollBar()
+        #vbar.setValue(vbar.value()+10)
+        #self.imageClicked.emit("emit the signal")
+
+    def wheelEvent(self, event):
+        '''Capture mouse-wheel events (e.g., for zooming)'''
+        modifiers = QtGui.QApplication.keyboardModifiers()
+        if modifiers == QtCore.Qt.ControlModifier:
+            if event.delta()>0:
+                self.zoom_in()
+            else:
+                self.zoom_out()
+        else:
+            event.ignore()
+        #self.emit(SIGNAL('scroll(int)'), ev.delta())
+        # FIXME: this should send a signal to inform the app that Full-size mode is now disabled
