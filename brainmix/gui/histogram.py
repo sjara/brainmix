@@ -3,6 +3,8 @@ Widget to edit the pixel-intensity histogram of images.
 
 Currently this class is intended to do it all:
 calculate histogram, show it, edit it.
+
+Please see the AUTHORS file for credits.
 '''
 
 from PySide import QtGui
