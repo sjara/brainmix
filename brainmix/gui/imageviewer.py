@@ -24,6 +24,11 @@ class ImageViewer(QtGui.QScrollArea):
         self.fitToWindow = fit
         self.origSize = None
         
+        # -- Values to be used for panning with mouse --
+        self.mousePos = None
+        self.hScrollValue = None
+        self.vScrollValue = None
+
         self.imageLabel = QtGui.QLabel()
         self.imageLabel.setBackgroundRole(QtGui.QPalette.Base)
         self.imageLabel.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
@@ -101,10 +106,17 @@ class ImageViewer(QtGui.QScrollArea):
         event.ignore() # Necessary to let the parent take care of key events
 
     def mousePressEvent(self, event):
-        print "from ImageViewer.mousePressEvent"
-        #vbar = self.verticalScrollBar()
-        #vbar.setValue(vbar.value()+10)
-        #self.imageClicked.emit("emit the signal")
+        self.mousePos = event.globalPos()
+        self.hScrollValue = self.horizontalScrollBar().value()
+        self.vScrollValue = self.verticalScrollBar().value()
+        
+    def mouseMoveEvent(self, event):
+        if event.buttons()==QtCore.Qt.LeftButton:
+            newpos = self.mousePos-event.globalPos()
+            vbar = self.verticalScrollBar()
+            vbar.setValue(self.vScrollValue+newpos.y())
+            hbar = self.horizontalScrollBar()
+            hbar.setValue(self.hScrollValue+newpos.x())
 
     def wheelEvent(self, event):
         '''Capture mouse-wheel events (e.g., for zooming)'''
