@@ -24,10 +24,16 @@ class ImageViewer(QtGui.QScrollArea):
         self.fitToWindow = fit
         self.origSize = None
         
+        # -- Values to be used for panning with mouse --
+        self.mousePos = None
+        self.hScrollValue = None
+        self.vScrollValue = None
+
         self.imageLabel = QtGui.QLabel()
         self.imageLabel.setBackgroundRole(QtGui.QPalette.Base)
         self.imageLabel.setSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Ignored)
         self.imageLabel.setScaledContents(True)
+        #self.imageLabel.setAlignment(QtCore.Qt.AlignCenter) # FIXME: Does not align image to scroll area
 
         self.setBackgroundRole(QtGui.QPalette.Dark)
         self.setWidget(self.imageLabel)
@@ -50,7 +56,7 @@ class ImageViewer(QtGui.QScrollArea):
     def resizeEvent(self, event):
         super(ImageViewer, self).resizeEvent(event)
         if self.fitToWindow:
-            self.resize_image_to_fit()
+            self.fit_to_window()
 
     def zoom_in(self):
         self.free_size()
@@ -60,7 +66,8 @@ class ImageViewer(QtGui.QScrollArea):
         self.free_size()
         self.scale_image(0.8)
       
-    def full_size(self):
+    def original_size(self):
+        '''Resize image to original size'''
         self.free_size()
         self.scale_image(1.0/self.scaleFactor)
 
@@ -71,7 +78,7 @@ class ImageViewer(QtGui.QScrollArea):
         self.imageLabel.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.imageLabel.setMinimumSize(QtCore.QSize(0,0)) # Fixes issue #11
 
-    def resize_image_to_fit(self):
+    def fit_to_window(self):
         '''Resize the image to be the same width as the scroll area'''
         self.fitToWindow = True
         if self.imageLabel.pixmap() is not None:
@@ -97,3 +104,28 @@ class ImageViewer(QtGui.QScrollArea):
     def keyPressEvent(self, event):
         '''Forward key presses to the parent'''
         event.ignore() # Necessary to let the parent take care of key events
+
+    def mousePressEvent(self, event):
+        self.mousePos = event.globalPos()
+        self.hScrollValue = self.horizontalScrollBar().value()
+        self.vScrollValue = self.verticalScrollBar().value()
+        
+    def mouseMoveEvent(self, event):
+        if event.buttons()==QtCore.Qt.LeftButton:
+            newpos = self.mousePos-event.globalPos()
+            vbar = self.verticalScrollBar()
+            vbar.setValue(self.vScrollValue+newpos.y())
+            hbar = self.horizontalScrollBar()
+            hbar.setValue(self.hScrollValue+newpos.x())
+
+    def wheelEvent(self, event):
+        '''Capture mouse-wheel events (e.g., for zooming)'''
+        modifiers = QtGui.QApplication.keyboardModifiers()
+        if modifiers == QtCore.Qt.ControlModifier:
+            if event.delta()>0:
+                self.zoom_in()
+            else:
+                self.zoom_out()
+        else:
+            event.ignore()
+        #self.emit(SIGNAL('scroll(int)'), ev.delta())
