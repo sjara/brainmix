@@ -38,6 +38,9 @@ class MainWindow(QtGui.QMainWindow):
             self.imageViewer.initialize(self.session.get_current_image())
             self.set_image()
 
+        # -- Connect signals --
+        self.imageViewer.signalFreeSize.connect(self.release_fit)
+
     def init_ui(self):
         '''Initialize the graphical user interface.'''
         self.setWindowTitle('BrainMix')
@@ -85,15 +88,15 @@ class MainWindow(QtGui.QMainWindow):
         self.zoomInAct = QtGui.QAction('Zoom In (25%)', self,
                                         shortcut='Ctrl+=',
                                         enabled=True,
-                                        triggered=self.slot_zoom_in)
+                                        triggered=self.imageViewer.zoom_in)
         viewMenu.addAction(self.zoomInAct)
         self.zoomOutAct = QtGui.QAction('Zoom Out (25%)', self,
                                         shortcut='Ctrl+-', enabled=True,
-                                        triggered=self.slot_zoom_out)
+                                        triggered=self.imageViewer.zoom_out)
         viewMenu.addAction(self.zoomOutAct)
         self.fullSizeAct = QtGui.QAction('Full Size', self,
                                         shortcut='Ctrl+N', enabled=True,
-                                        triggered=self.slot_full_size)
+                                        triggered=self.imageViewer.full_size)
         viewMenu.addAction(self.fullSizeAct)
 
         viewMenu.addSeparator()
@@ -143,27 +146,16 @@ class MainWindow(QtGui.QMainWindow):
         self.set_image()
             
     @QtCore.Slot()
+    def release_fit(self):
+        self.fitToWindowAct.setChecked(False)
+
+    @QtCore.Slot()
     def slot_fit_to_window(self):
         '''Slot to handle fit to window action callback.'''
         if self.fitToWindowAct.isChecked():
             self.imageViewer.resize_image_to_fit()
         else:
             self.imageViewer.free_size()
-
-    @QtCore.Slot()
-    def slot_zoom_in(self):
-        self.imageViewer.zoom_in()
-        self.fitToWindowAct.setChecked(False)
-
-    @QtCore.Slot()
-    def slot_zoom_out(self):
-        self.imageViewer.zoom_out()
-        self.fitToWindowAct.setChecked(False)
-
-    @QtCore.Slot()
-    def slot_full_size(self):
-        self.imageViewer.full_size()
-        self.fitToWindowAct.setChecked(False)
 
     @QtCore.Slot()
     def slot_open_histogram(self):

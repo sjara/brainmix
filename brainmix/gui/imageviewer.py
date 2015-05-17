@@ -9,6 +9,8 @@ from PySide import QtGui
 from . import numpy2qimage
 
 class ImageViewer(QtGui.QScrollArea):
+    signalFreeSize = QtCore.Signal() # Release from fit-to-window view
+
     def __init__(self, parent=None, fit=True):
         '''
         Widget to view a stack of images.
@@ -56,14 +58,17 @@ class ImageViewer(QtGui.QScrollArea):
     def zoom_in(self):
         self.free_size()
         self.scale_image(1.25)
+        self.signalFreeSize.emit()
         
     def zoom_out(self):
         self.free_size()
         self.scale_image(0.8)
+        self.signalFreeSize.emit()
       
     def full_size(self):
         self.free_size()
         self.scale_image(1.0/self.scaleFactor)
+        self.signalFreeSize.emit()
 
     def free_size(self):
         '''Unfix size of image. To be used for zooming.'''
