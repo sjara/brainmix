@@ -33,13 +33,10 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- If session already has images, show them --
         if session.loaded:
-            # FIXME: initialize should be automatic inside imageViewer
+            # FIXME: initialization should be automatic inside imageViewer
             #        maybe by checking a flag (reset when loading data)
             self.imageViewer.initialize(self.session.get_current_image())
             self.set_image()
-
-        # -- Connect signals --
-        self.imageViewer.signalFreeSize.connect(self.release_fit)
 
     def init_ui(self):
         '''Initialize the graphical user interface.'''
@@ -75,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
         # -- Edit Menu --
         editMenu = menubar.addMenu('&Edit')
         self.editHistogramAct = editMenu.addAction('Edit &histogram', 
-                                                   self.slot_open_histogram)
+                                                   self.open_histogram)
         self.editHistogramAct.setShortcut('Ctrl+H')
 
         # -- View Menu --
@@ -94,17 +91,16 @@ class MainWindow(QtGui.QMainWindow):
                                         shortcut='Ctrl+-', enabled=True,
                                         triggered=self.imageViewer.zoom_out)
         viewMenu.addAction(self.zoomOutAct)
-        self.fullSizeAct = QtGui.QAction('Full Size', self,
+        self.origSizeAct = QtGui.QAction('Original Size (1:1)', self,
                                         shortcut='Ctrl+N', enabled=True,
-                                        triggered=self.imageViewer.full_size)
-        viewMenu.addAction(self.fullSizeAct)
+                                        triggered=self.imageViewer.original_size)
+        viewMenu.addAction(self.origSizeAct)
 
         viewMenu.addSeparator()
         self.fitToWindowAct = QtGui.QAction('&Fit to Window', self,
-                                            enabled=True, checkable=True,
+                                            enabled=True,
                                             shortcut='Ctrl+F',
-                                            triggered=self.slot_fit_to_window)
-        self.fitToWindowAct.setChecked(self.fitAtStart)
+                                            triggered=self.imageViewer.fit_to_window)
         viewMenu.addAction(self.fitToWindowAct)
        
         # -- Registration Menu --
@@ -145,34 +141,10 @@ class MainWindow(QtGui.QMainWindow):
         # The method self.set_image will know if showAligned has been checked.
         self.set_image()
             
-    @QtCore.Slot()
-    def release_fit(self):
-        self.fitToWindowAct.setChecked(False)
-
-    @QtCore.Slot()
-    def slot_fit_to_window(self):
-        '''Slot to handle fit to window action callback.'''
-        if self.fitToWindowAct.isChecked():
-            self.imageViewer.resize_image_to_fit()
-        else:
-            self.imageViewer.free_size()
-
-    @QtCore.Slot()
-    def slot_open_histogram(self):
-        '''Estimate and show histogram.'''
+    def open_histogram(self):
+        '''Open histogram widget.'''
         self.imhist.show()
         self.update_histogram()
-        #currentImage = self.session.get_current_image()
-        #bitDepth = self.session.origImages.bitDepth
-        '''
-        (histValues, binEdges) = np.histogram(currentImage,bins=256)
-        #bins = np.arange(256)
-        #hist = (20*(np.sin(2*np.pi/100*bins)+2)).astype(int)
-        #print np.unique(currentImage)
-        '''
-        # -- Open histogram dialog --
-        #self.imhist.show()
-        #self.imhist.set_data(currentImage,2**bitDepth)
 
     def update_histogram(self):
         '''Estimate and update histogram.'''
@@ -181,11 +153,7 @@ class MainWindow(QtGui.QMainWindow):
         self.imhist.set_data(currentImage,2**bitDepth)
 
     def open_images_dialog(self):
-        '''
-        Brings up a file chooser and signals when files are selected.
-        Signal sends file names along.
-        Currently supports .jpg and .png
-        '''
+        '''Brings up a file chooser.'''
         files, filtr = QtGui.QFileDialog.getOpenFileNames(self,'Select Input Images',
                                                           '/tmp/','Image Files(*.jpg *.png)')
         self.session.open_images(files)

@@ -9,8 +9,6 @@ from PySide import QtGui
 from . import numpy2qimage
 
 class ImageViewer(QtGui.QScrollArea):
-    signalFreeSize = QtCore.Signal() # Release from fit-to-window view
-
     def __init__(self, parent=None, fit=True):
         '''
         Widget to view a stack of images.
@@ -53,22 +51,20 @@ class ImageViewer(QtGui.QScrollArea):
     def resizeEvent(self, event):
         super(ImageViewer, self).resizeEvent(event)
         if self.fitToWindow:
-            self.resize_image_to_fit()
+            self.fit_to_window()
 
     def zoom_in(self):
         self.free_size()
         self.scale_image(1.25)
-        self.signalFreeSize.emit()
         
     def zoom_out(self):
         self.free_size()
         self.scale_image(0.8)
-        self.signalFreeSize.emit()
       
-    def full_size(self):
+    def original_size(self):
+        '''Resize image to original size'''
         self.free_size()
         self.scale_image(1.0/self.scaleFactor)
-        self.signalFreeSize.emit()
 
     def free_size(self):
         '''Unfix size of image. To be used for zooming.'''
@@ -77,7 +73,7 @@ class ImageViewer(QtGui.QScrollArea):
         self.imageLabel.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.imageLabel.setMinimumSize(QtCore.QSize(0,0)) # Fixes issue #11
 
-    def resize_image_to_fit(self):
+    def fit_to_window(self):
         '''Resize the image to be the same width as the scroll area'''
         self.fitToWindow = True
         if self.imageLabel.pixmap() is not None:
@@ -121,4 +117,3 @@ class ImageViewer(QtGui.QScrollArea):
         else:
             event.ignore()
         #self.emit(SIGNAL('scroll(int)'), ev.delta())
-        # FIXME: this should send a signal to inform the app that Full-size mode is now disabled
