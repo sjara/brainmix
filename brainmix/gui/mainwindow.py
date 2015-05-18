@@ -26,7 +26,7 @@ class MainWindow(QtGui.QMainWindow):
 
         # -- Widget members --
         self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
-        self.imhist = histogram.HistogramView() # If parent=self, it will be non-window child
+        self.imhist = histogram.HistogramEditor() # If parent=self, it will be non-window child
         
         # -- Intialize graphical interface --
         self.init_ui()

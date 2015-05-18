@@ -10,6 +10,22 @@ Please see the AUTHORS file for credits.
 from PySide import QtGui
 from PySide import QtCore
 import numpy as np
+from . import multipleslider
+
+class HistogramEditor(QtGui.QWidget):
+    def __init__(self,parent=None):
+        super(HistogramEditor, self).__init__(parent)
+        self.histView = HistogramView()
+        self.sliders = multipleslider.MultipleSlider()
+
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(self.histView)
+        layout.addWidget(self.sliders)
+        self.setLayout(layout)
+        
+    def set_data(self,image,nbins):
+        self.histView.set_data(image,nbins)
+
 
 class HistogramView(QtGui.QWidget):
     def __init__(self,parent=None):
@@ -20,9 +36,18 @@ class HistogramView(QtGui.QWidget):
         super(HistogramView, self).__init__(parent)
         self.setMinimumWidth(200)
         self.setMinimumHeight(100)
+        '''
         self.setMaximumWidth(300)
         self.setMaximumHeight(200)
+        '''
         ###self.boundPos = [0,300] ### FIXME
+
+        # -- Paint background (for testing size) --
+        if 0:
+            self.setAutoFillBackground(True)
+            p = self.palette()
+            p.setColor(self.backgroundRole(), QtCore.Qt.green)
+            self.setPalette(p)
 
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close,
                         context=QtCore.Qt.WidgetShortcut)
