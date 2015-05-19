@@ -22,9 +22,20 @@ class HistogramEditor(QtGui.QWidget):
         layout.addWidget(self.histView)
         layout.addWidget(self.sliders)
         self.setLayout(layout)
-        
+ 
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close,
+                        context=QtCore.Qt.WidgetShortcut)
+
+        self.sliders.sliderMoved.connect(self.set_bounds)
+
     def set_data(self,image,nbins):
+        self.sliders.reset(nbins)
         self.histView.set_data(image,nbins)
+        #self.set_bounds(0,0)
+        #self.set_bounds(1,nbins)
+
+    def set_bounds(self,handle,bound):
+        self.histView.set_bound(handle,bound)
 
 
 class HistogramView(QtGui.QWidget):
@@ -34,13 +45,17 @@ class HistogramView(QtGui.QWidget):
         It will also show boundaries (to be edited with a slider)
         '''
         super(HistogramView, self).__init__(parent)
-        self.setMinimumWidth(200)
+
+        self.hist = []
+        self.bins = []
+
+        self.setMinimumWidth(500)
         self.setMinimumHeight(100)
         '''
         self.setMaximumWidth(300)
         self.setMaximumHeight(200)
         '''
-        ###self.boundPos = [0,300] ### FIXME
+        self.boundPos = [16,255-16] # Arbitrary starting point
 
         # -- Paint background (for testing size) --
         if 0:
@@ -48,9 +63,6 @@ class HistogramView(QtGui.QWidget):
             p = self.palette()
             p.setColor(self.backgroundRole(), QtCore.Qt.green)
             self.setPalette(p)
-
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+W"), self, self.close,
-                        context=QtCore.Qt.WidgetShortcut)
 
     def set_data(self,image,nbins):
         '''Calculate histogram and show it, given image data'''
@@ -64,6 +76,10 @@ class HistogramView(QtGui.QWidget):
             self.hist = histValues
             self.bins = binEdges[:-1]
             self.update()
+
+    def set_bound(self,handle,bound):
+        self.boundPos[handle] = bound
+        self.update()
 
     def transform_coords(self,xval,yval):
         '''Transform plotting values to window pixel values'''
@@ -80,7 +96,8 @@ class HistogramView(QtGui.QWidget):
         qp.begin(self)
         if len(self.bins):
             self.draw_hist(qp)
-            ###self.draw_bound(qp,1) # FIXME
+            self.draw_bound(qp,0)
+            self.draw_bound(qp,1)
         qp.end()
 
     def draw_bound(self,qp,ind):
@@ -108,3 +125,15 @@ class HistogramView(QtGui.QWidget):
             histPoints.append(QtCore.QPointF(oneHval,oneVval))
         qp.drawPolygon(histPoints)
 
+''' 
+if __name__ == "__main__" and __package__ is None:
+    __package__ = "brainmix.gui"
+    import sys, signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL) # Enable Ctrl-C
+    app=QtGui.QApplication.instance() # checks if QApplication already exists 
+    if not app: # create QApplication if it doesnt exist 
+        app = QtGui.QApplication(sys.argv)
+    histeditor = HistogramEditor()
+    histeditor.show()
+    app.exec_()
+'''
