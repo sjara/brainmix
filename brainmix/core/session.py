@@ -8,6 +8,7 @@ Please see the AUTHORS file for credits.
 import glob
 import os
 import skimage.io
+import skimage.exposure
 from . import data
 from ..core import registration_modules
 from ..modules import czifile
@@ -17,8 +18,10 @@ class Session(object):
         '''Application session'''
         self.origImages = data.ImageStack()
         self.alignedImages = data.ImageStack()
+        self.editedImages = data.ImageStack()
         self.currentImageInd = 0
         self.aligned = False
+        self.edited = False
         self.loaded = False
 
         # -- Grab the registration methods --
@@ -34,7 +37,10 @@ class Session(object):
 
     def get_current_image(self, aligned=False):
         '''Return current image'''
-        if aligned:
+        # FIXME: There should be edited for orig and for aligned
+        if self.edited:
+            return self.editedImages.images[self.currentImageInd]
+        elif aligned:
             return self.alignedImages.images[self.currentImageInd]
         else:
             return self.origImages.images[self.currentImageInd]
@@ -57,6 +63,7 @@ class Session(object):
             # FIXME: the bitdepth is not used yet by other functions.
             #        We need to use it when converting to QImage
             self.origImages.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
+            self.editedImages = self.origImages.copy()
             self.alignedImages.bitDepth = bitdepth # FIXME: maybe the bitdepth is different
             # -- Save the filenames --
             self.origImages.set_filenames(files)
@@ -98,3 +105,11 @@ class Session(object):
         regImages = regFunction(self.origImages.images)
         self.alignedImages.set_images(regImages)
         aligned = True
+
+    def change_levels(self,levels):
+        '''Adjust intensity of pixels'''
+        ind = self.currentImageInd
+        self.edited = True
+        ##img = self.origImages.images[ind,:,:]
+        self.editedImages.images[ind,:,:] = skimage.exposure.rescale_intensity(self.origImages.images[ind,:,:],levels)
+

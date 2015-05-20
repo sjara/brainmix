@@ -38,6 +38,15 @@ class MainWindow(QtGui.QMainWindow):
             self.imageViewer.initialize(self.session.get_current_image())
             self.set_image()
 
+        self.open_histogram()
+        
+        # -- Connect signals --
+        self.imhist.sliders.sliderMoved.connect(self.change_levels)
+
+    def change_levels(self,lowbound,highbound):
+        self.session.change_levels((lowbound,highbound))
+        self.set_image()
+
     def init_ui(self):
         '''Initialize the graphical user interface.'''
         self.setWindowTitle('BrainMix')

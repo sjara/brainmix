@@ -29,13 +29,14 @@ class HistogramEditor(QtGui.QWidget):
         self.sliders.sliderMoved.connect(self.set_bounds)
 
     def set_data(self,image,nbins):
-        self.sliders.reset(nbins)
+        #self.sliders.reset(nbins)
+        self.sliders.setMaximum(nbins)
         self.histView.set_data(image,nbins)
         #self.set_bounds(0,0)
         #self.set_bounds(1,nbins)
 
-    def set_bounds(self,handle,bound):
-        self.histView.set_bound(handle,bound)
+    def set_bounds(self,lowbound,highbound):
+        self.histView.set_bounds([lowbound,highbound])
 
 
 class HistogramView(QtGui.QWidget):
@@ -77,8 +78,8 @@ class HistogramView(QtGui.QWidget):
             self.bins = binEdges[:-1]
             self.update()
 
-    def set_bound(self,handle,bound):
-        self.boundPos[handle] = bound
+    def set_bounds(self,bounds):
+        self.boundPos = bounds
         self.update()
 
     def transform_coords(self,xval,yval):

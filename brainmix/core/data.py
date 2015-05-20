@@ -4,6 +4,8 @@ Main data structure to contain images stacks.
 Please see the AUTHORS file for credits.
 '''
 
+import copy
+
 class ImageStack(object):
     def __init__(self):
         '''Data structure for images'''
@@ -20,5 +22,6 @@ class ImageStack(object):
     def set_filenames(self, files):
         '''Set the names of the image files'''
         self.fileNames = files
-       
+    def copy(self):
+        return copy.deepcopy(self)
 
