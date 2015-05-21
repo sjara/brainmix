@@ -152,7 +152,11 @@ class MainWindow(QtGui.QMainWindow):
             
     def open_histogram(self):
         '''Open histogram widget.'''
-        self.imhist.show()
+        #self.imhist.show()
+        # FIXME: this is repeated in update_histogram
+        #bitDepth = self.session.get_current_bitdepth()
+        bitDepth = self.session.origImages.bitDepth
+        self.imhist.reset(2**bitDepth)
         self.update_histogram()
 
     def update_histogram(self):

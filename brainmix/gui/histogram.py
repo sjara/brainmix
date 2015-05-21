@@ -28,9 +28,14 @@ class HistogramEditor(QtGui.QWidget):
 
         self.sliders.sliderMoved.connect(self.set_bounds)
 
+    def reset(self,nbins):
+        self.sliders.setMaximum(nbins-1)
+        self.sliders.setValues([0,nbins-1])
+        self.show()
+        
     def set_data(self,image,nbins):
         #self.sliders.reset(nbins)
-        self.sliders.setMaximum(nbins)
+        self.sliders.setMaximum(nbins-1)
         self.histView.set_data(image,nbins)
         #self.set_bounds(0,0)
         #self.set_bounds(1,nbins)
@@ -57,6 +62,7 @@ class HistogramView(QtGui.QWidget):
         self.setMaximumHeight(200)
         '''
         self.boundPos = [16,255-16] # Arbitrary starting point
+        self.boundPos = [0,2**16] # Arbitrary starting point
 
         # -- Paint background (for testing size) --
         if 0:
@@ -70,7 +76,7 @@ class HistogramView(QtGui.QWidget):
         if self.isVisible():
              #FIXME: calculating bins every time may be slow
             if image.dtype==np.float:
-                bins = np.linspace(0,1,nbins+1)
+                bins = np.linspace(0,1,nbins)
             else:
                 bins = np.arange(nbins)
             (histValues, binEdges) = np.histogram(image,bins=bins)

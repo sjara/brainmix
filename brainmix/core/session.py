@@ -59,6 +59,7 @@ class Session(object):
                 # FIXME: this assumes 16bit images are really 12bit (true for LISB scope)
                 bitdepth = 12
             else:
+                
                 bitdepth = 8
             # FIXME: the bitdepth is not used yet by other functions.
             #        We need to use it when converting to QImage
@@ -85,7 +86,8 @@ class Session(object):
             ### For 3D images: np.rollaxis(image4D,0,3)[:,:,:,0]
             return image
         else:
-            return skimage.io.imread(imgfile,as_grey)
+            #return skimage.io.imread(imgfile,as_grey)
+            return (256*skimage.io.imread(imgfile,as_grey)).astype('uint8') # FIXME: it should be 255
 
     def increment_current_image(self):
         '''Increment the current image number'''
@@ -110,6 +112,11 @@ class Session(object):
         '''Adjust intensity of pixels'''
         ind = self.currentImageInd
         self.edited = True
-        ##img = self.origImages.images[ind,:,:]
-        self.editedImages.images[ind,:,:] = skimage.exposure.rescale_intensity(self.origImages.images[ind,:,:],levels)
+        self.editedImages.images[ind,:,:] = \
+            skimage.exposure.rescale_intensity(self.origImages.images[ind,:,:],levels)
+        #print '[session.py]'
+        #print levels
+        #print self.editedImages.images[ind,:,:].min(), self.editedImages.images[ind,:,:].max()
 
+def change_pixel_levels(image,levels):
+    '''Adjust pixel intensity so that  '''
