@@ -120,6 +120,12 @@ class ImageViewer(QtGui.QScrollArea):
 
     def wheelEvent(self, event):
         '''Capture mouse-wheel events (e.g., for zooming)'''
+        if event.delta()>0:
+            self.zoom_in()
+        else:
+            self.zoom_out()
+        '''
+        # -- Using CTRL-wheel --
         modifiers = QtGui.QApplication.keyboardModifiers()
         if modifiers == QtCore.Qt.ControlModifier:
             if event.delta()>0:
@@ -128,4 +134,5 @@ class ImageViewer(QtGui.QScrollArea):
                 self.zoom_out()
         else:
             event.ignore()
+        '''
         #self.emit(SIGNAL('scroll(int)'), ev.delta())

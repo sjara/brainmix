@@ -38,8 +38,6 @@ class MainWindow(QtGui.QMainWindow):
             self.imageViewer.initialize(self.session.get_current_image())
             self.set_image()
 
-        self.open_histogram()
-        
         # -- Connect signals --
         self.imhist.sliders.sliderMoved.connect(self.change_levels)
 
@@ -168,12 +166,10 @@ class MainWindow(QtGui.QMainWindow):
     def open_images_dialog(self):
         '''Brings up a file chooser.'''
         files, filtr = QtGui.QFileDialog.getOpenFileNames(self,'Select Input Images',
-                                                          '/tmp/','Image Files(*.jpg *.png)')
+                                                          '/tmp/','Image Files(*)')
         self.session.open_images(files)
         self.imageViewer.initialize(self.session.get_current_image())
 
-
-    # * * * * * * * EVENTS * * * * * * * *
     def closeEvent(self, event):
         '''
         Executed when closing the main window.

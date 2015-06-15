@@ -18,10 +18,10 @@ class Session(object):
         '''Application session'''
         self.origImages = data.ImageStack()
         self.alignedImages = data.ImageStack()
-        self.editedImages = data.ImageStack()
+        #self.displayedImages = data.ImageStack()
         self.currentImageInd = 0
         self.aligned = False
-        self.edited = False
+        #self.displayed = False
         self.loaded = False
 
         # -- Grab the registration methods --
@@ -37,10 +37,9 @@ class Session(object):
 
     def get_current_image(self, aligned=False):
         '''Return current image'''
-        # FIXME: There should be edited for orig and for aligned
-        if self.edited:
-            return self.editedImages.images[self.currentImageInd]
-        elif aligned:
+        #if self.displayed:
+        #    return self.displayedImages.images[self.currentImageInd]
+        if aligned:
             return self.alignedImages.images[self.currentImageInd]
         else:
             return self.origImages.images[self.currentImageInd]
@@ -64,7 +63,7 @@ class Session(object):
             # FIXME: the bitdepth is not used yet by other functions.
             #        We need to use it when converting to QImage
             self.origImages.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
-            self.editedImages = self.origImages.copy()
+            #self.displayedImages = self.origImages.copy()
             self.alignedImages.bitDepth = bitdepth # FIXME: maybe the bitdepth is different
             # -- Save the filenames --
             self.origImages.set_filenames(files)
@@ -110,13 +109,15 @@ class Session(object):
 
     def change_levels(self,levels):
         '''Adjust intensity of pixels'''
+        pass
+        '''
+        # -- This method needs to be tested --
         ind = self.currentImageInd
-        self.edited = True
-        self.editedImages.images[ind,:,:] = \
+        self.displayed = True
+        self.displayedImages.images[ind,:,:] = \
             skimage.exposure.rescale_intensity(self.origImages.images[ind,:,:],levels)
         #print '[session.py]'
         #print levels
-        #print self.editedImages.images[ind,:,:].min(), self.editedImages.images[ind,:,:].max()
+        #print self.displayedImages.images[ind,:,:].min(), self.displayedImages.images[ind,:,:].max()
+        '''
 
-def change_pixel_levels(image,levels):
-    '''Adjust pixel intensity so that  '''
