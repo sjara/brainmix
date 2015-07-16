@@ -8,21 +8,16 @@ http://bigwww.epfl.ch/publications/thevenaz9801.pdf
 Written by Anna Lakunina and Santiago Jaramillo.
 See AUTHORS file for credits.
 
-== TO DO ==
-- Mask according to something besides black pixels.
-- In rigidBodyTransform, apply transform only to pixels inside.
+TO DO:
+- Keep mask for both source and target.
+- FIX BUG: Allow using other downscale factors
 
-== NOTES ==
+NOTES:
 - rigid-body transformation is faster if most of the resulting image falls outside the range.
 
-== COMMENTS ==
-- What is scharr? is it to calculate the first gradient?
-  is there an advantage in doing it as a complex number instead of two convolutions?
-- Docstrings https://sphinxcontrib-napoleon.readthedocs.org/en/latest/
-- Naming conventions. Functions/methods should be lowercase (with underscores)
-- I changed the mask to a boolean mask (not by value anymore).
-- In residual() I removed the mask on the source. Maybe we need it later for a stack.
-- attempt = tfrm; attempt[0] = tfrm[0] - update[0] (THIS WILL CHANGE tfrm)
+- What is dTheta? What reference is used for the math of Hessian?
+- Why do we need to find one more attempt at the end?
+- Why doesn't it use the diagonal?
 '''
 
 
@@ -67,7 +62,7 @@ def rigid_body_transform(spline, imshape, coords, tfrm):
     cosAngle,sinAngle = (math.cos(tfrm[0]),math.sin(tfrm[0]))
     rotMatrix = np.array([ [cosAngle, -sinAngle], [sinAngle, cosAngle] ])
     translationVector = np.array(tfrm[1:])[:,np.newaxis]
-    transCoords = np.dot(rotMatrix, coords-translationVector)  # NOTE: translation is subtracted
+    transCoords = np.dot(rotMatrix, coords+translationVector)
     # -- Find coordinates that ended up outside the image --
     outsideX = (transCoords[0,:]<-0.5) | ((transCoords[0,:])>(imshape[1]+0.5))
     outsideY = (transCoords[1,:]<-0.5) | ((transCoords[1,:])>(imshape[0]+0.5))
@@ -84,7 +79,7 @@ def rigid_body_transform(spline, imshape, coords, tfrm):
 
 def residuals(tfrm, targetspline, source, imshape, coords):
     '''
-    Compute the difference in intensity of each pixel between the source image and a transformed target image.
+    Compute pixel intensity difference between source and transformed target image.
 
     Args:
         tfrm (): ...
@@ -99,7 +94,76 @@ def residuals(tfrm, targetspline, source, imshape, coords):
     return (err, mask)
 
 
-def pyramidLMA(source, target, pyramidDepth, minLevel=0):
+def rigid_body_least_squares(tfrm, tspline, sgrad, source, coords, maxIterations):
+    '''
+    Apply modified Levenberg-Marquardt algorithm to minimise the difference in pixel
+    intensities between the source and target image samples.
+
+    Args:
+        tfrm (np.ndarray): initial tranformation
+        tspline (): spline approximation of target image.
+        sgrad (np.ndarray): (imHeight,imWidth) gradient of source image 
+        
+    Returns:
+
+    '''
+    imshape = sgrad.shape
+    (height, width) = imshape
+    attempt = tfrm.copy()
+    lambdavar = 1.0
+    (err, mask) = residuals(-tfrm, tspline, source, imshape, coords)
+    bestMeanSquares = np.mean(err[mask]**2)
+    #dTheta = np.multiply(sgrad.imag,np.arange(width)) - np.multiply(sgrad.real,np.arange(height).reshape(height,1))
+    # -- Pre-calculate items for the Hessian (for efficiency) --
+    dTheta = sgrad.imag*np.arange(width) - sgrad.real*np.arange(height)[:,np.newaxis]
+    dThetaSq = dTheta**2
+    dThetaGradReal = dTheta*sgrad.real
+    dThetaGradImag = dTheta*sgrad.imag
+    gradRealSq = sgrad.real**2
+    gradRealGradImag = sgrad.real*sgrad.imag
+    gradImagSq = sgrad.imag**2
+    (heightSq,widthSq) = np.array(imshape)**2
+    iterations = 1
+    displacement = 1.0
+    #while (iterations < maxIterations) and (displacement > 0.001):
+    # NOTE: using range() for compatibility with Python3
+    for iteration in range(maxIterations):
+        sHessian = np.array([ [np.sum(dThetaSq[mask]), np.sum(dThetaGradReal[mask]), np.sum(dThetaGradImag[mask])],
+                              [0, np.sum(gradRealSq[mask]), np.sum(gradRealGradImag[mask])],
+                              [0, 0, np.sum(gradImagSq[mask])] ])
+        sHessian += np.triu(sHessian,1).T
+        gradient = np.array([np.sum(err[mask]*dTheta[mask]), 
+                             np.sum(err[mask]*sgrad.real[mask]), 
+                             np.sum(err[mask]*sgrad.imag[mask])])
+        sHessianDiag = np.diag(lambdavar*np.diag(sHessian))
+        update = np.dot(np.linalg.inv(sHessian+sHessianDiag),gradient)
+        attempt = tfrm - update
+        displacement = math.sqrt(update[1]*update[1] + update[2]*update[2]) + \
+                       0.25 * math.sqrt(widthSq + heightSq) * np.absolute(update[0])
+        iterations += 1
+        err, mask = residuals(-attempt, tspline, source, imshape, coords)
+        if np.mean(err[mask]**2)<bestMeanSquares:
+            bestMeanSquares = np.mean(err[mask]**2)
+            # NOTE: Numpy 1.7 or newer has np.copyto() which should be faster than copy()
+            tfrm = attempt.copy() # We need to copy values, tfrm=attempt would just make a reference to 'attempt'
+            lambdavar /= 10.0 # FIXME: we may need to prevent lambda from becoming 0
+        else:
+            lambdavar *= 10.0
+        if displacement < 0.001:
+            break
+    '''
+    update = np.dot(np.linalg.inv(sHessian),gradient)
+    attempt = tfrm - update
+    #attempt[0] = tfrm[0] - update[0]
+    #attempt[1:] = tfrm[1:] + update[1:]
+    err, mask = residuals(attempt*-1, tspline, source, imshape, coords)
+    if np.mean(err[mask]**2)<bestMeanSquares:
+        tfrm = attempt
+    '''
+    return tfrm
+            
+
+def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=2, debug=False):
     '''
     Find transformation that registers source image to the target image.
 
@@ -122,73 +186,25 @@ def pyramidLMA(source, target, pyramidDepth, minLevel=0):
         tfrm (np.ndarray):
         mask
     '''
-    downscale=2
-    sourcepyramid = tuple(skimage.transform.pyramid_gaussian(source, max_layer=pyramidDepth, downscale=downscale))
-    targetpyramid = tuple(skimage.transform.pyramid_gaussian(target, max_layer=pyramidDepth, downscale=downscale))
+    #downscale=2
+    sourcePyramid = tuple(skimage.transform.pyramid_gaussian(source, max_layer=pyramidDepth, downscale=downscale))
+    targetPyramid = tuple(skimage.transform.pyramid_gaussian(target, max_layer=pyramidDepth, downscale=downscale))
+    # -- Use Scharr operator to calculate image gradient in horizontal and vertical directions --
     scharr = np.array([[-3-3j, 0-10j, +3-3j], [-10+0j, 0+0j, +10+0j], [-3+3j, 0+10j, +3+3j]])
     tfrm = np.zeros(3)
 
     for layer in range(pyramidDepth, minLevel-1, -1):
-        imgradient = scipy.signal.convolve2d(sourcepyramid[layer], scharr, boundary='symm', mode='same')
-        imshape = targetpyramid[layer].shape
-        print 'Layer {0}: {1}x{2}'.format(layer,*imshape)
-        (spline,coords) = spline_approx(targetpyramid[layer])
-        tfrm[1:] *= downscale
-        tfrm = rigidBodyLeastSquares(tfrm, spline, imgradient, sourcepyramid[layer], coords, imshape, 10*2**(layer-1))
+        sourceGradient = scipy.signal.convolve2d(sourcePyramid[layer], scharr, boundary='symm', mode='same')
+        imshape = targetPyramid[layer].shape
+        (targetSpline,coords) = spline_approx(targetPyramid[layer])
+        tfrm[1:] *= downscale  # Scale translation for next level in pyramid
+        tfrm = rigid_body_least_squares(tfrm, targetSpline, sourceGradient, sourcePyramid[layer],
+                                        coords, 10*2**(layer-1))
         abstfrm = np.concatenate(([tfrm[0]],tfrm[1:]*pow(downscale,layer)));
-        print 'th={0:0.4}, x={1:0.1f} , y={2:0.1f}'.format(*abstfrm) ### DEBUG
-    tfrm[1:] *= pow(downscale,minLevel)
-    return tfrm
-
-
-def rigidBodyLeastSquares(tfrm, spline, grad, source, coords, imshape, maxIterations):
-    '''
-    
-    This method applies the inverted Levenberg-Marquardt algorithm to minimise the difference in pixel
-    intensities between the source and target image samples.
-    '''
-    (height, width) = imshape
-    #print maxIterations
-    attempt = tfrm
-    lambdavar = 1.0
-    (err, mask) = residuals(-tfrm, spline, source, imshape, coords)
-    bestMeanSquares = np.mean(err[mask]**2)
-    dTheta = np.multiply(grad.imag,np.arange(width)) - np.multiply(grad.real,np.arange(height).reshape(height,1))
-    iterations = 1
-    while True:
-        hessian = np.array([[np.sum(dTheta[mask]**2), np.sum(dTheta[mask]*grad.real[mask]), np.sum(dTheta[mask]*grad.imag[mask])], [0, np.sum(grad.real[mask]**2), np.sum(grad.real[mask]*grad.imag[mask])], [0, 0, np.sum(grad.imag[mask]**2)]])
-        hessian += np.triu(hessian,1).T
-        gradient = np.array([np.sum(err[mask]*dTheta[mask]), np.sum(err[mask]*grad.real[mask]), np.sum(err[mask]*grad.imag[mask])])
-        hessiandiag = np.array(np.multiply(lambdavar*np.identity(3),hessian))
-        update = np.dot(np.linalg.inv(hessian+hessiandiag),gradient)
-        attempt[0] = tfrm[0] - update[0]
-        #attempt[1] = math.cos(update[0]) * (tfrm[1]+update[1]) - math.sin(update[0]) * (tfrm[2] + update[2])
-        #attempt[2] = math.sin(update[0]) * (tfrm[1]+update[1]) + math.cos(update[0]) * (tfrm[2] + update[2])
-        attempt[1:] = tfrm[1:] + update[1:]
-        #attempt = tfrm - update
-        displacement = math.sqrt(update[1]**2 + update[2]**2) + 0.25 * math.sqrt(width**2 + height**2) * np.absolute(update[0])
-        #print update
-        #print lambdavar
-        iterations += 1
-        err, mask = residuals(attempt*-1, spline, source, imshape, coords)
-        if np.mean(err[mask]**2)<bestMeanSquares:
-            bestMeanSquares = np.mean(err[mask]**2)
-            tfrm = attempt
-            lambdavar /= 10.0 #todo: possibly hack to prevent lambda from becoming 0
-        else:
-            lambdavar *= 10.0
-        if iterations > maxIterations or displacement < 0.001:
-            break
-    update = np.dot(np.linalg.inv(hessian),gradient)
-    attempt[0] = tfrm[0] - update[0]
-    attempt[1:] = tfrm[1:] + update[1:]
-    #attempt = tfrm - update
-    err, mask = residuals(attempt*-1, spline, source, imshape, coords)
-    if np.mean(err[mask]**2)<bestMeanSquares:
-        tfrm = attempt
-    return tfrm
-            
-
+        if debug:
+            print 'Layer {0}: {1}x{2}'.format(layer,*imshape)
+            print 'th={0:0.4}, x={1:0.1f} , y={2:0.1f}'.format(*abstfrm) ### DEBUG
+    return abstfrm
 
 
 if __name__=='__main__':
@@ -202,9 +218,10 @@ if __name__=='__main__':
         sourceimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-D3-01b.jpg',as_grey=True)
         targetimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-D4-01b.jpg',as_grey=True) 
 
-        tfrm = pyramidLMA(sourceimg, targetimg, 7, 3)  # 7,3 works well
+        tfrm = rigid_body_registration(sourceimg, targetimg, 7, 3, debug=True)  # 7,3 works well
 
-        skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=-tfrm[1:])
+        #skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=-tfrm[1:])
+        skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=tfrm[1:]) # NOTE (v2)
         outimg = skimage.transform.warp(sourceimg,skTransform)
         #(spline,coords) = spline_approx(sourceimg)
         #(outimg, mask) = rigid_body_transform(spline, sourceimg.shape, coords, tfrm)
@@ -212,7 +229,8 @@ if __name__=='__main__':
         if 1:
             plt.clf()
             plt.imshow(targetimg-outimg, interpolation='none', cmap='coolwarm') #'CMRmap'
-            plt.axis('equal')
+            plt.gca().set_aspect('equal', 'box')
+            #plt.axis('equal')
             #plt.colorbar()
             plt.show()
 
