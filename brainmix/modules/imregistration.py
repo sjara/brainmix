@@ -221,7 +221,7 @@ if __name__=='__main__':
         tfrm = rigid_body_registration(sourceimg, targetimg, 7, 3, debug=True)  # 7,3 works well
 
         #skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=-tfrm[1:])
-        skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=tfrm[1:]) # NOTE (v2)
+        skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=tfrm[1:])
         outimg = skimage.transform.warp(sourceimg,skTransform)
         #(spline,coords) = spline_approx(sourceimg)
         #(outimg, mask) = rigid_body_transform(spline, sourceimg.shape, coords, tfrm)
