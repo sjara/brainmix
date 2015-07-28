@@ -4,6 +4,9 @@ Image registration.
 This module implements the algorithm by Thevenaz et al (1998)
 "A Pyramid Approach to Subpixel Registration Based on Intensity"
 http://bigwww.epfl.ch/publications/thevenaz9801.pdf
+with improved convergence by Noppadol Chumchob and Ke Chen (2009)
+"A Robust Affine Registration Method"
+http://www.math.ualberta.ca/ijnam/Volume-6-2009/No-2-09/2009-02-09.pdf
 
 Written by Anna Lakunina and Santiago Jaramillo.
 See AUTHORS file for credits.
@@ -11,14 +14,13 @@ See AUTHORS file for credits.
 TO DO:
 - FIX BUG: Allow using other downscale factors
 - Do we need to keep the masks for points outside the image boundaries?
-- We need a citation for the math of the Hessian approximation? (and define what dTheta is)
 '''
 
 
 import numpy as np
 import skimage.transform
-import scipy.interpolate
 import scipy.signal
+import scipy.ndimage
 
 
 def rigid_body_transform(image, tfrm):
@@ -115,7 +117,13 @@ def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=
     '''
     sourcePyramid = tuple(skimage.transform.pyramid_gaussian(source, max_layer=pyramidDepth, downscale=downscale))
     targetPyramid = tuple(skimage.transform.pyramid_gaussian(target, max_layer=pyramidDepth, downscale=downscale))
-    tfrm = np.zeros(3)
+    # -- compute the center of mass for each image to provide the initial guess for the translation --
+    scenter = scipy.ndimage.measurements.center_of_mass(sourcePyramid[minLevel])
+    tcenter = scipy.ndimage.measurements.center_of_mass(targetPyramid[minLevel])
+    tfrm = np.array([0, scenter[0]-tcenter[0], scenter[1]-tcenter[1]])
+    print tfrm
+    tfrm[1:] /= pow(downscale,pyramidDepth-minLevel)
+    #tfrm = np.zeros(3)
 
     for layer in range(pyramidDepth, minLevel-1, -1):
         tfrm[1:] *= downscale  # Scale translation for next level in pyramid
