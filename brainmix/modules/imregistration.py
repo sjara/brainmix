@@ -136,6 +136,25 @@ def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=
     return toptfrm
 
 
+def get_pyramid_depth(image):
+    '''
+    Computes the depth of the pyramids that will be created and used during image registration.
+
+    Args: 
+        image (np.ndarray): original image
+
+    Returns:
+        pyramidDepth (int): number of layers in pyramids
+    '''
+    pyramidDepth = 1
+    width = image.shape[1]
+    height = image.shape[0]
+    while width > 24 or height > 24:
+        width /= 2
+        height /= 2
+        pyramidDepth += 1
+    return pyramidDepth
+
 
 if __name__=='__main__':
 
