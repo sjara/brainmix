@@ -128,7 +128,7 @@ def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=
     for layer in range(pyramidDepth, minLevel-1, -1):
         tfrm[1:] *= downscale  # Scale translation for next level in pyramid
         tfrm = rigid_body_least_squares(sourcePyramid[layer],targetPyramid[layer],
-                                        tfrm, 10*2**(layer-1))
+                                        tfrm, int(10*2**(layer-1)))
         toptfrm = np.concatenate(([tfrm[0]],tfrm[1:]*pow(downscale,layer)));
         if debug:
             print 'Layer {0}: {1}x{2}'.format(layer, *targetPyramid[layer].shape)
