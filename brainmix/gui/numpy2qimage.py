@@ -39,7 +39,9 @@ def gray2qimage(gray):
         #    result.setColor(i, QtGui.QColor(i, i, i).rgb())
     else:
         # Convert by multiplying by 256 and making it uint8
-        gray = (gray * 256).astype(numpy.uint8)
+        #print gray * 2**(8-12)
+        #gray = (gray * 256).astype(numpy.uint8)
+        gray = (gray * 2**(8-12)).astype(numpy.uint8)
         gray = numpy.require(gray, numpy.uint8, 'C')
         h, w = gray.shape
         result = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)

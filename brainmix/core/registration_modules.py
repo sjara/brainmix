@@ -11,6 +11,11 @@ import sys
 methods = []
 functions = []
 
+# -- Thevenaz (like TurboReg in Fiji) --
+from ..modules import stackreg
+methods.append("Thevenaz")
+functions.append(stackreg.register_stack)
+
 # -- Dummy (return the original stack) --
 def dummy(img_stack): 
     return img_stack
@@ -30,6 +35,7 @@ except ImportError:
     print "ITK Methods not supported"
 '''
 
+'''
 # -- thunder --
 thunderLoaded = True
 try:
@@ -40,6 +46,7 @@ except ImportError:
     tunderLoaded = False
     print "Thunder Not loaded"
     raise
+'''
 
 # ------ #    
 

@@ -16,6 +16,8 @@ from ..modules import czifile
 class Session(object):
     def __init__(self, inputdir=None):
         '''Application session'''
+        self.inputdir=inputdir
+        self.filenames = []
         self.origImages = data.ImageStack()
         self.alignedImages = data.ImageStack()
         #self.displayedImages = data.ImageStack()
@@ -27,11 +29,13 @@ class Session(object):
         # -- Grab the registration methods --
         self.regMethods = registration_modules.get_registration_methods() # List of names
         self.regFunctions = registration_modules.get_registration_functions()
-        self.currentRegMethodIndex = None
+        self.currentRegMethodIndex = 0
 
         # -- Open images if input folder set on command line --
-        if inputdir is not None:
-            imagefiles = glob.glob(os.path.join(inputdir,'*'))
+        if self.inputdir is not None:
+            filenames = sorted(os.listdir(inputdir)) 
+            imagefiles = [os.path.join(self.inputdir,f) for f in filenames]
+            #imagefiles = glob.glob(os.path.join(inputdir,'*'))
             self.open_images(imagefiles)
             self.loaded = True
 
@@ -51,6 +55,7 @@ class Session(object):
     def open_images(self, files):
         '''Open images from files'''
         if len(files) > 0:
+            self.filenames = files
             # -- Load in the images --
             imageCollection = skimage.io.ImageCollection(files, as_grey=True, 
                                                          load_func=self.img_load_func)
@@ -58,7 +63,6 @@ class Session(object):
                 # FIXME: this assumes 16bit images are really 12bit (true for LISB scope)
                 bitdepth = 12
             else:
-                
                 bitdepth = 8
             # FIXME: the bitdepth is not used yet by other functions.
             #        We need to use it when converting to QImage
@@ -77,7 +81,8 @@ class Session(object):
             czi = czifile.CziFile(imgfile)
             image4D = czi.asarray()
             if as_grey:
-                image = image4D[0,:,:,0] # 2D (taking only first channel)
+                #image = image4D[0,:,:,0] # 2D (taking only first channel)
+                image = image4D[0,:,:,0].astype(float) # 2D (taking only first channel)
             else:
                 raise TypeError('Loading multichannel images has not been implemented.')
                 #image = np.rollaxis(image4D,0,3)[:,:,:,0] # 3D
@@ -86,7 +91,7 @@ class Session(object):
             return image
         else:
             #return skimage.io.imread(imgfile,as_grey)
-            return (256*skimage.io.imread(imgfile,as_grey)).astype('uint8') # FIXME: it should be 255
+            return (256*skimage.io.imread(imgfile,as_grey)).astype('uint8') # FIXME: should it be 255?
 
     def increment_current_image(self):
         '''Increment the current image number'''
@@ -103,7 +108,9 @@ class Session(object):
     def register_stack(self):
         '''Apply registration algorithm to image stack'''
         regFunction = self.regFunctions[self.currentRegMethodIndex]
-        regImages = regFunction(self.origImages.images)
+        #regImages = regFunction(self.origImages.images)
+        regImages = regFunction(self.origImages.images, self.currentImageInd)
+        #regImages = regFunction(self.origImages.images, self.currentImageInd, relative=False)
         self.alignedImages.set_images(regImages)
         aligned = True
 

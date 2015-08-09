@@ -1,10 +1,14 @@
+'''
+Module for registering a stack of images (of same size and modality).
+'''
+
 import imregistration as imreg
 import numpy as np
 import matplotlib.pyplot as plt
 import skimage.io
 from scipy import interpolate
 
-def stack_register(stack, target=0):
+def register_stack(stack, targetInd=0, relative=True):
     '''
     Register a stack of images to each other. A target image is specified that all others will be 
     registered to (the first image if none is specified). The target's neighbors will be registered to
@@ -12,32 +16,55 @@ def stack_register(stack, target=0):
     of registered images in the same orientation as the target.
 
     Args: 
-        stack (list of np.ndarray): stack of images for registration
-        target (int): optional: index of image that will be registered to. Defaults to 0 (first image)
+        stack (np.ndarray): [nImages, height, width] stack of images for registration.
+        targetInd (int): (optional) index of image to be used as first target. Default=0.
 
     Returns:
-        outstack (np.ndarray): stack of registered images
+        outstack (np.ndarray): [nImages, height, width] stack of registered images.
     '''
-    outimg = stack[target]
-    outstack2 = [outimg]
-    outstack = []
-    pyramidDepth = get_pyramid_depth(stack[target])
-    minLevel = 3
-    if target != len(stack):
-        for image in range(target+1, len(stack)):
-            print image
-            tfrm = imreg.rigid_body_registration(stack[image], outimg, pyramidDepth, minLevel)
-            outimg = rigid_body_transform(stack[image], tfrm)
-            outstack2.append(outimg)
-    outimg = stack[target]
-    if target != 0:
-        for image in reversed(range(target)):
-            print image
-            tfrm = imreg.rigid_body_registration(stack[image], outimg, pyramidDepth, minLevel)
-            outimg = rigid_body_transform(stack[image], tfrm)
-            outstack.append(outimg)
-        outstack = outstack[::-1]
-        outstack.extend(outstack2)
+    nImages = len(stack)
+    outstack = stack.copy() #np.empty(stack.shape)
+    pyramidDepth = get_pyramid_depth(stack[targetInd])
+    minLevel = 3 # FIXME: HARDCODED for JaraLab
+    print 'Registering stack...'
+    for imageInd in range(targetInd-1,-1,-1):
+        if relative:
+            newTargetInd = imageInd+1
+        else:
+            newTargetInd = targetInd
+        print '{0} to {1}'.format(imageInd,newTargetInd)
+        tfrm = imreg.rigid_body_registration(stack[imageInd], outstack[newTargetInd],
+                                             pyramidDepth, minLevel)
+        outimg = rigid_body_transform(stack[imageInd], tfrm)
+        outstack[imageInd] = outimg
+    for imageInd in range(targetInd+1,nImages):
+        if relative:
+            newTargetInd = imageInd-1
+        else:
+            newTargetInd = targetInd
+        print '{0} to {1}'.format(imageInd,newTargetInd)
+        tfrm = imreg.rigid_body_registration(stack[imageInd], outstack[newTargetInd],
+                                             pyramidDepth, minLevel)
+        outimg = rigid_body_transform(stack[imageInd], tfrm)
+        outstack[imageInd] = outimg
+    '''
+    if targetInd != len(stack):
+        for imageInd in range(targetInd+1, len(stack)):
+            print imageInd
+            tfrm = imreg.rigid_body_registration(stack[imageInd], outimg, pyramidDepth, minLevel)
+            outimg = rigid_body_transform(stack[imageInd], tfrm)
+            outstack[imageInd] = outimg
+    outimg = stack[targetInd]
+    if targetInd != 0:
+        for imageInd in reversed(range(targetInd)):
+            print imageInd
+            tfrm = imreg.rigid_body_registration(stack[imageInd], outimg, pyramidDepth, minLevel)
+            outimg = rigid_body_transform(stack[imageInd], tfrm)
+            outstack[imageInd] = outimg
+        #outstack = outstack[::-1]
+        #outstack.extend(outstack2)
+    '''
+    print 'Done registering stack.'
     return outstack
         
 def get_pyramid_depth(image):
@@ -79,7 +106,8 @@ def rigid_body_transform(image, tfrm):
     outimg = rbr.rigidBodyTransform(spline, width, height, coords, tfrm)
     '''
     skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=tfrm[1:])
-    outimg = skimage.transform.warp(image,skTransform)
+    borderColor = np.mean(image[0,:])
+    outimg = skimage.transform.warp(image,skTransform,cval=borderColor)
     return outimg
 
 
@@ -93,11 +121,11 @@ if __name__=='__main__':
     img4 = skimage.io.imread(os.path.join(datadir,'p1-F4-01b.jpg'),as_grey=True)
     img5 = skimage.io.imread(os.path.join(datadir,'p1-F5-01b.jpg'),as_grey=True)
     img6 = skimage.io.imread(os.path.join(datadir,'p1-F6-01b.jpg'),as_grey=True)
-    stack = [img1, img2, img3, img4, img5, img6]
-    target = 1
+    stack = np.array([img1, img2, img3, img4, img5, img6])
+    targetInd = 2
 
     print 'Starting registration...'
-    regstack = stack_register(stack, target)
+    regstack = register_stack(stack, targetInd, relative=False)
     print 'Finished registration.'
 
     for image in range(len(regstack)):

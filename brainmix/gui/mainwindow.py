@@ -45,9 +45,18 @@ class MainWindow(QtGui.QMainWindow):
         self.session.change_levels((lowbound,highbound))
         self.set_image()
 
+    def update_title(self):
+        nImages = len(self.session.filenames)
+        if nImages:
+            currentInd = self.session.currentImageInd
+            currentFilename = self.session.filenames[currentInd]
+            self.setWindowTitle('BrainMix - {0} ({1}/{2})'.format(currentFilename,currentInd+1,nImages))
+        else:
+            self.setWindowTitle('BrainMix')
+
     def init_ui(self):
         '''Initialize the graphical user interface.'''
-        self.setWindowTitle('BrainMix')
+        self.update_title()
         self.resize(500, 400)
         self.create_menus()
 
@@ -64,6 +73,7 @@ class MainWindow(QtGui.QMainWindow):
             self.imageViewer.set_image(self.session.get_current_image(aligned=True))
         else:
             self.imageViewer.set_image(self.session.get_current_image())
+        self.update_title()
 
     def create_menus(self):
         '''Create the application menus.'''
@@ -112,8 +122,10 @@ class MainWindow(QtGui.QMainWindow):
        
         # -- Registration Menu --
         self.inSubjectAct = QtGui.QAction('In-Subject Registration', self,
-                                          enabled=False, triggered=self.slot_register)
-        regMenu = menubar.addMenu('Registration')
+                                          enabled=False, 
+                                          shortcut='Ctrl+R',
+                                          triggered=self.slot_register)
+        regMenu = menubar.addMenu('&Registration')
         methMenu = regMenu.addMenu('Methods')
         for oneRegMethod in self.session.regMethods:
             act = QtGui.QAction(oneRegMethod, self, checkable=True,
