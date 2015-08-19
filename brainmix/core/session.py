@@ -10,8 +10,11 @@ import os
 import skimage.io
 import skimage.exposure
 from . import data
+reload(data)
 from ..core import registration_modules
 from ..modules import czifile
+
+IMG_FORMATS = ['jpg','png','czi']
 
 class Session(object):
     def __init__(self, inputdir=None):
@@ -19,7 +22,8 @@ class Session(object):
         self.inputdir=inputdir
         self.filenames = []
         self.origImages = data.ImageStack()
-        self.alignedImages = data.ImageStack()
+        #self.origImages = data.ImageStack()
+        self.alignedImages = data.ImageStackOLD()
         #self.displayedImages = data.ImageStack()
         self.currentImageInd = 0
         self.aligned = False
@@ -34,8 +38,12 @@ class Session(object):
         # -- Open images if input folder set on command line --
         if self.inputdir is not None:
             filenames = sorted(os.listdir(inputdir)) 
-            imagefiles = [os.path.join(self.inputdir,f) for f in filenames]
+            #imagefiles = [os.path.join(self.inputdir,f) for f in filenames]
             #imagefiles = glob.glob(os.path.join(inputdir,'*'))
+            #allformats = '{'+','.join(IMG_FORMATS)+'}'
+            imagefiles = sorted(glob.glob(os.path.join(inputdir,'*.czi'))) # FIXME: hardcoded
+            #imagefiles = fullpathfiles #[os.path.basename(fn) for fn in fullpathfiles]
+            # os.path.basename()
             self.open_images(imagefiles)
             self.loaded = True
 
@@ -46,7 +54,8 @@ class Session(object):
         if aligned:
             return self.alignedImages.images[self.currentImageInd]
         else:
-            return self.origImages.images[self.currentImageInd]
+            #return self.origImages.images[self.currentImageInd]
+            return self.origImages[self.currentImageInd].images[0]
 
     def set_registration_method(self,regMethodIndex):
         '''Set the registration method by index'''
@@ -66,11 +75,18 @@ class Session(object):
                 bitdepth = 8
             # FIXME: the bitdepth is not used yet by other functions.
             #        We need to use it when converting to QImage
-            self.origImages.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
+            #self.origImages.set_images(imageCollection.concatenate(),bitdepth=bitdepth)
             #self.displayedImages = self.origImages.copy()
-            self.alignedImages.bitDepth = bitdepth # FIXME: maybe the bitdepth is different
+            #self.alignedImages.bitDepth = bitdepth # FIXME: maybe the bitdepth is different
             # -- Save the filenames --
-            self.origImages.set_filenames(files)
+            #self.origImages.set_filenames(files)
+            self.origImages.set_images(imageCollection.concatenate(),files)
+
+    '''
+    def split_by_channel(self):
+        possibleChannels = ['b','r','g']
+        channelEachFile = [os.path.splitext(fn)[0][-1] for fn in mainSession.filenames]
+    ''' 
 
     def img_load_func(self,imgfile,as_grey=False):
         '''
@@ -96,14 +112,14 @@ class Session(object):
     def increment_current_image(self):
         '''Increment the current image number'''
         self.currentImageInd += 1
-        if self.currentImageInd == self.origImages.nImages:
+        if self.currentImageInd == len(self.origImages):
             self.currentImageInd = 0
 
     def decrement_current_image(self):
         '''Decrement the current image number'''
         self.currentImageInd -= 1
         if self.currentImageInd < 0:
-            self.currentImageInd = self.origImages.nImages-1
+            self.currentImageInd = len(self.origImages)-1
 
     def register_stack(self):
         '''Apply registration algorithm to image stack'''

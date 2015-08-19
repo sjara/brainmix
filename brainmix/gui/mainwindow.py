@@ -46,6 +46,7 @@ class MainWindow(QtGui.QMainWindow):
         self.set_image()
 
     def update_title(self):
+        # FIXME: this needs to change now that we do multichannel
         nImages = len(self.session.filenames)
         if nImages:
             currentInd = self.session.currentImageInd
@@ -73,7 +74,7 @@ class MainWindow(QtGui.QMainWindow):
             self.imageViewer.set_image(self.session.get_current_image(aligned=True))
         else:
             self.imageViewer.set_image(self.session.get_current_image())
-        self.update_title()
+        #self.update_title()
 
     def create_menus(self):
         '''Create the application menus.'''
@@ -120,6 +121,9 @@ class MainWindow(QtGui.QMainWindow):
                                             triggered=self.imageViewer.fit_to_window)
         viewMenu.addAction(self.fitToWindowAct)
        
+        # -- Channel Menu ---
+
+
         # -- Registration Menu --
         self.inSubjectAct = QtGui.QAction('In-Subject Registration', self,
                                           enabled=False, 
@@ -171,9 +175,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def update_histogram(self):
         '''Estimate and update histogram.'''
+        # FIXME: this should only run if histogram is open
+        pass
+        '''
         currentImage = self.session.get_current_image()
         bitDepth = self.session.origImages.bitDepth
         self.imhist.set_data(currentImage,2**bitDepth)
+        '''
 
     def open_images_dialog(self):
         '''Brings up a file chooser.'''
