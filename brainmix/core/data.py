@@ -52,7 +52,7 @@ class Slice(object):
     def __init__(self):
         self.images = [] # List of 2D np.ndarray objects
         self.filenames = [] # List of strings. 
-        self.labels = [] # List of strings. Label for each image (e.g., what channel)
+        self.labels = [] # List of strings. Channel label for each image (e.g., what channel)
         self.transformation = [] # Transformation for registration (1D or 2D array)
     def add_image(self, data, filename, label):
         self.images.append(data)
@@ -68,7 +68,7 @@ class ImageStack(list):
         #self.bitDepth = None
     def set_images(self, images, filenames):
         '''Set the number of images and the original image data'''
-        possibleChannels = ['b','r','g']
+        ###possibleChannels = ['b','r','g']  ##### FIXME: HARDCODED
         prevSliceLabel = ''
         indSlice = -1
         for indimg,filename in enumerate(filenames):
@@ -80,11 +80,13 @@ class ImageStack(list):
                 prevSliceLabel = basename[0][:-1]
             #self.slices[indSlice].add_image(images[indimg],filename,channelThisImg)
             self[indSlice].add_image(images[indimg],filename,channelThisImg)
-    def get_filenames(self):
+    def get_images(self,channel):
+        '''Return a stack of images for a given channel'''
+        return [oneslice.images[channel] for oneslice in self] 
+    def get_filenames(self, channel):
         '''Get the names of the image files'''
-        print 'Not implemented'
+        #print 'Not implemented'
+        return [oneslice.filenames[channel] for oneslice in self]
     def copy(self):
-        print 'Not implemented'
-        pass
-        #return copy.deepcopy(self)
+        return copy.deepcopy(self)
 

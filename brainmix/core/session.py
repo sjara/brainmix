@@ -13,6 +13,7 @@ from . import data
 reload(data)
 from ..core import registration_modules
 from ..modules import czifile
+import numpy as np
 
 IMG_FORMATS = ['jpg','png','czi']
 
@@ -23,7 +24,7 @@ class Session(object):
         self.filenames = []
         self.origImages = data.ImageStack()
         #self.origImages = data.ImageStack()
-        self.alignedImages = data.ImageStackOLD()
+        self.alignedImages = data.ImageStack()
         #self.displayedImages = data.ImageStack()
         self.currentImageInd = 0
         self.aligned = False
@@ -47,15 +48,19 @@ class Session(object):
             self.open_images(imagefiles)
             self.loaded = True
 
-    def get_current_image(self, aligned=False):
+    def get_current_image(self, channel=0, aligned=False):
         '''Return current image'''
         #if self.displayed:
         #    return self.displayedImages.images[self.currentImageInd]
         if aligned:
-            return self.alignedImages.images[self.currentImageInd]
+            ###return self.alignedImages.images[self.currentImageInd]
+            return self.alignedImages[self.currentImageInd].images[channel]
         else:
-            #return self.origImages.images[self.currentImageInd]
-            return self.origImages[self.currentImageInd].images[0]
+            ###return self.origImages.images[self.currentImageInd]
+            return self.origImages[self.currentImageInd].images[channel]
+
+    def get_image_channels(self):
+        return self.origImages[self.currentImageInd].labels
 
     def set_registration_method(self,regMethodIndex):
         '''Set the registration method by index'''
@@ -124,10 +129,12 @@ class Session(object):
     def register_stack(self):
         '''Apply registration algorithm to image stack'''
         regFunction = self.regFunctions[self.currentRegMethodIndex]
-        #regImages = regFunction(self.origImages.images)
-        regImages = regFunction(self.origImages.images, self.currentImageInd)
-        #regImages = regFunction(self.origImages.images, self.currentImageInd, relative=False)
-        self.alignedImages.set_images(regImages)
+        ###regImages = regFunction(self.origImages.images)
+        #regImages = regFunction(self.origImages.images, self.currentImageInd)
+        origImgStack = np.array(self.origImages.get_images(channel=0))
+        regImages = regFunction(origImgStack, self.currentImageInd)
+        ###regImages = regFunction(self.origImages.images, self.currentImageInd, relative=False)
+        self.alignedImages.set_images(regImages, self.origImages.get_filenames(channel=0))
         aligned = True
 
     def change_levels(self,levels):

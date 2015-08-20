@@ -19,12 +19,13 @@ class MainWindow(QtGui.QMainWindow):
         '''Main window that holds all GUI pieces.'''
         super(MainWindow, self).__init__(parent)
 
-        # -- Functional members --
+        # -- Functional attributes --
         self.session = session
         self.regActionGroup = QtGui.QActionGroup(self) # Registration actions 
         self.fitAtStart = True # Fit image to window at start (or not)
+        self.currentChannelInd = 0
 
-        # -- Widget members --
+        # -- Widget attributes --
         self.imageViewer = imageviewer.ImageViewer(self, fit=self.fitAtStart)
         self.imhist = histogram.HistogramEditor() # If parent=self, it will be non-window child
         
@@ -73,7 +74,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.showAlignedAct.isChecked():
             self.imageViewer.set_image(self.session.get_current_image(aligned=True))
         else:
-            self.imageViewer.set_image(self.session.get_current_image())
+            self.imageViewer.set_image(self.session.get_current_image(channel=self.currentChannelInd))
         #self.update_title()
 
     def create_menus(self):
@@ -122,7 +123,11 @@ class MainWindow(QtGui.QMainWindow):
         viewMenu.addAction(self.fitToWindowAct)
        
         # -- Channel Menu ---
-
+        channelMenu = menubar.addMenu('&Channel')
+        self.nextChannel = QtGui.QAction('Next channel', self,
+                                         shortcut='C', enabled=True,
+                                         triggered=self.slot_view_next_channel)
+        channelMenu.addAction(self.nextChannel)
 
         # -- Registration Menu --
         self.inSubjectAct = QtGui.QAction('In-Subject Registration', self,
@@ -164,6 +169,14 @@ class MainWindow(QtGui.QMainWindow):
         # The method self.set_image will know if showAligned has been checked.
         self.set_image()
             
+    @QtCore.Slot()
+    def slot_view_next_channel(self):
+        '''Select next channel'''
+        channels = self.session.get_image_channels()
+        nchan = self.currentChannelInd+1
+        self.currentChannelInd = nchan if nchan<len(channels) else 0
+        self.set_image()
+
     def open_histogram(self):
         '''Open histogram widget.'''
         #self.imhist.show()
