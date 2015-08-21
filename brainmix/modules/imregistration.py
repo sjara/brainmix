@@ -58,35 +58,29 @@ def rigid_body_least_squares(source, target, tfrm, maxIterations):
     lambdavar = 1.0
     # -- Use Scharr operator to calculate image gradient in horizontal and vertical directions --
     scharr = np.array([[-3-3j, 0-10j, +3-3j], [-10+0j, 0+0j, +10+0j], [-3+3j, 0+10j, +3+3j]])
-    sgrad = scipy.signal.convolve2d(source, scharr, boundary='symm', mode='same')
+    tgrad = scipy.signal.convolve2d(target, scharr, boundary='symm', mode='same')
     # -- Calculate current error --
-    err = rigid_body_transform(target, -tfrm) - source
+    err = target - rigid_body_transform(source, tfrm)
     bestMeanSquares = np.mean(err**2)
-    # -- Pre-calculate items for the Hessian (for efficiency) --
-    dTheta = sgrad.imag*np.arange(width) - sgrad.real*np.arange(height)[:,np.newaxis]
-    dThetaSq = dTheta**2
-    dThetaGradReal = dTheta*sgrad.real
-    dThetaGradImag = dTheta*sgrad.imag
-    gradRealSq = sgrad.real**2
-    gradRealGradImag = sgrad.real*sgrad.imag
-    gradImagSq = sgrad.imag**2
+    # -- Pre-calculate the Hessian (for efficiency) --
+    dTheta = tgrad.imag*np.arange(width) - tgrad.real*np.arange(height)[:,np.newaxis]
     (heightSq,widthSq) = np.array(imshape)**2
     displacement = 1.0
+    sHessian = np.array([[np.sum(dTheta**2), np.sum(dTheta*tgrad.real), np.sum(dTheta*tgrad.imag)],
+                        [0, np.sum(tgrad.real**2), np.sum(tgrad.real*tgrad.imag)],
+                        [0, 0, np.sum(tgrad.imag**2)] ])
+    sHessian += np.triu(sHessian,1).T
     # NOTE: using range() for compatibility with Python3
     for iteration in range(maxIterations):
-        sHessian = np.array([ [np.sum(dThetaSq), np.sum(dThetaGradReal), np.sum(dThetaGradImag)],
-                              [0, np.sum(gradRealSq), np.sum(gradRealGradImag)],
-                              [0, 0, np.sum(gradImagSq)] ])
-        sHessian += np.triu(sHessian,1).T
         gradient = np.array([np.sum(err*dTheta), 
-                             np.sum(err*sgrad.real), 
-                             np.sum(err*sgrad.imag)])
+                             np.sum(err*tgrad.real), 
+                             np.sum(err*tgrad.imag)])
         sHessianDiag = np.diag(lambdavar*np.diag(sHessian))
         update = np.dot(np.linalg.inv(sHessian+sHessianDiag),gradient)
         attempt = newtfrm - update
         displacement = np.sqrt(update[1]*update[1] + update[2]*update[2]) + \
                        0.25 * np.sqrt(widthSq + heightSq) * np.absolute(update[0])
-        err = rigid_body_transform(target, -attempt) - source
+        err = target - rigid_body_transform(source, attempt)
         if np.mean(err**2)<bestMeanSquares:
             bestMeanSquares = np.mean(err**2)
             # NOTE: Numpy 1.7 or newer has np.copyto() which should be faster than copy()
@@ -113,7 +107,7 @@ def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=
         minLevel (int): 0 for original level, >0 for coarser resolution.
     
     Return:
-        tfrm (np.ndarray):
+        tfrm (np.ndarray): (3,) best transformation [rotation_angle, translation_x, translation_y].
     '''
     sourcePyramid = tuple(skimage.transform.pyramid_gaussian(source, max_layer=pyramidDepth, downscale=downscale))
     targetPyramid = tuple(skimage.transform.pyramid_gaussian(target, max_layer=pyramidDepth, downscale=downscale))
@@ -149,7 +143,7 @@ def get_pyramid_depth(image):
     pyramidDepth = 1
     width = image.shape[1]
     height = image.shape[0]
-    while width > 24 or height > 24:
+    while width > 24 or height > 24: #FIXME: allow other minimum sizes
         width /= 2
         height /= 2
         pyramidDepth += 1
@@ -161,10 +155,10 @@ if __name__=='__main__':
     import skimage.io
     import matplotlib.pyplot as plt
     
-    sourceimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-D4-01b.jpg',as_grey=True)
-    targetimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-D3-01b.jpg',as_grey=True) 
+    sourceimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-E4-01b.jpg',as_grey=True)
+    targetimg = skimage.io.imread('/data/brainmix_data/test043_TL/p1-E3-01b.jpg',as_grey=True) 
 
-    CASE = 1
+    CASE = 2
 
     if CASE==0:
         targetimg = skimage.transform.pyramid_reduce(targetimg,2**6)
@@ -193,4 +187,21 @@ if __name__=='__main__':
             #plt.imshow(outimg, interpolation='none', cmap='coolwarm') #'CMRmap'
             plt.gca().set_aspect('equal', 'box')
             plt.show()
+            
+    if CASE==2:
+        tfrm = rigid_body_registration(sourceimg, targetimg, 7, 3)
+        print tfrm
+        outimg = rigid_body_transform(sourceimg, tfrm)
+        plt.subplot(2,2,1)
+        plt.imshow(sourceimg, cmap='PiYG')
+        plt.title('source')
+        plt.subplot(2,2,2)
+        plt.imshow(targetimg, cmap='PiYG')
+        plt.title('target')
+        plt.subplot(2,2,3)
+        plt.imshow(outimg, cmap='PiYG')
+        plt.title('aligned source')
+        plt.subplot(2,2,4)
+        plt.imshow(targetimg-outimg, cmap='PiYG')
+        plt.title('difference')
 
