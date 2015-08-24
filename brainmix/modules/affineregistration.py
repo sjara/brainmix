@@ -33,7 +33,7 @@ def affine_transform(image, tfrm):
         outimg (np.ndarray): A transformed image.
     '''
     skTransform = skimage.transform.AffineTransform(matrix=tfrm)
-    outimg = skimage.transform.warp(image, skTransform, mode='nearest')
+    outimg = skimage.transform.warp(image, skTransform, order=3, mode='nearest')
     return outimg
 
 
@@ -51,7 +51,9 @@ def affine_least_squares(source, target, tfrm, maxIterations):
     Returns:
         tfrm (np.ndarray): (3,3) best transformation.
     '''
-    topidentity = np.vstack((np.eye(2,3),np.array([0,0,0])))
+    # -- topidentity is used to convert between the standard affine transformation matrix and the one used by this --
+    # -- algorithm, which requires the identity transformation to equal zeros(2,3) --
+    topidentity = np.vstack((np.eye(2,3),np.zeros(3)))
     imshape = source.shape
     (height, width) = imshape
     newtfrm = tfrm - topidentity
@@ -62,7 +64,7 @@ def affine_least_squares(source, target, tfrm, maxIterations):
     # -- Calculate current error --
     err = target - affine_transform(source, tfrm)
     bestMeanSquares = np.mean(err**2)
-    # -- Pre-calculate items for the Hessian (for efficiency) --
+    # -- Pre-calculate the Hessian --
     xdx = tgrad.real*np.arange(width)
     ydx = tgrad.real*np.arange(height)[:,np.newaxis]
     xdy = tgrad.imag*np.arange(width)
@@ -77,7 +79,7 @@ def affine_least_squares(source, target, tfrm, maxIterations):
                          [0, 0, 0, 0, 0, np.sum(tgrad.imag**2)]])
     tHessian += np.triu(tHessian,1).T
     # NOTE: using range() for compatibility with Python3
-    for iteration in range(maxIterations):
+    for iteration in range(int(maxIterations)):
         gradient = np.array([np.sum(err*xdx),
                              np.sum(err*ydx),
                              np.sum(err*tgrad.real),
@@ -85,11 +87,11 @@ def affine_least_squares(source, target, tfrm, maxIterations):
                              np.sum(err*ydy), 
                              np.sum(err*tgrad.imag)])
         tHessianDiag = np.diag(lambdavar*np.diag(tHessian))
+        # -- update is inverted and composed with current best attempt --
         updateinv = np.dot(np.linalg.inv(tHessian+tHessianDiag),gradient).reshape(2,3)
         updateinv = np.vstack((updateinv, np.array([0,0,1])))+topidentity
         update = np.linalg.inv(updateinv)
         newtfrmfull = newtfrm+topidentity
-        #print newtfrmfull
         attempt = np.dot(newtfrmfull,update)
         displacement = np.sqrt(update[0,2]*update[0,2] + update[1,2]*update[1,2]) + \
                        0.25 * np.sqrt(widthSq + heightSq) * np.sum(np.absolute(update[:2,:2]))
@@ -124,18 +126,19 @@ def affine_registration(source, target, pyramidDepth, minLevel=0, downscale=2, d
     sourcePyramid = tuple(skimage.transform.pyramid_gaussian(source, max_layer=pyramidDepth, downscale=downscale))
     targetPyramid = tuple(skimage.transform.pyramid_gaussian(target, max_layer=pyramidDepth, downscale=downscale))
     # -- compute small scale rigid body transformation to provide the initial guess for the affine transformation --
-    '''rtfrm = imreg.rigid_body_registration(sourcePyramid[minLevel], targetPyramid[minLevel], pyramidDepth-minLevel)
+    rtfrm = imreg.rigid_body_registration(sourcePyramid[minLevel], targetPyramid[minLevel], pyramidDepth-minLevel)
     rotmatrix = np.array([[math.cos(rtfrm[0]), -math.sin(rtfrm[0])], [math.sin(rtfrm[0]), math.cos(rtfrm[0])]])
     tfrm = np.append(rotmatrix, [[rtfrm[1]], [rtfrm[2]]], 1)
-    tfrm[:,-1] /= pow(downscale,pyramidDepth-minLevel)'''
-    tfrm = np.array([[1,0,0],[0,1,0],[0,0,1]])
+    tfrm[:,-1] /= pow(downscale,pyramidDepth-minLevel)
+    tfrm = np.vstack((tfrm, [0,0,1]))
+    #tfrm = np.array([[1,0,0],[0,1,0],[0,0,1]])
     for layer in range(pyramidDepth, minLevel-1, -1):
         tfrm[:2,-1] *= downscale  # Scale translation for next level in pyramid
         tfrm = affine_least_squares(sourcePyramid[layer],targetPyramid[layer], tfrm, 10*2**(layer-1))
         toptfrm = np.concatenate((tfrm[:2,0:2],tfrm[:2,-1:]*pow(downscale,layer)), axis=1)
         toptfrm = np.vstack((toptfrm, np.array([0,0,1])))
         if debug:
-            pass
+            pass #some debugging stuff Santiago was using
             #print 'Layer {0}: {1}x{2}'.format(layer, *targetPyramid[layer].shape)
             #print 'th={0:0.4}, x={1:0.1f} , y={2:0.1f}'.format(*toptfrm) ### DEBUG
     return toptfrm
