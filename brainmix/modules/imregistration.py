@@ -62,21 +62,21 @@ def rigid_body_least_squares(source, target, tfrm, maxIterations):
     # -- Calculate current error --
     err = target - rigid_body_transform(source, tfrm)
     bestMeanSquares = np.mean(err**2)
-    # -- Pre-calculate the Hessian (for efficiency) --
+    # -- Pre-calculate the Hessian --
     dTheta = tgrad.imag*np.arange(width) - tgrad.real*np.arange(height)[:,np.newaxis]
     (heightSq,widthSq) = np.array(imshape)**2
     displacement = 1.0
-    sHessian = np.array([[np.sum(dTheta**2), np.sum(dTheta*tgrad.real), np.sum(dTheta*tgrad.imag)],
+    tHessian = np.array([[np.sum(dTheta**2), np.sum(dTheta*tgrad.real), np.sum(dTheta*tgrad.imag)],
                         [0, np.sum(tgrad.real**2), np.sum(tgrad.real*tgrad.imag)],
                         [0, 0, np.sum(tgrad.imag**2)] ])
-    sHessian += np.triu(sHessian,1).T
+    tHessian += np.triu(tHessian,1).T
     # NOTE: using range() for compatibility with Python3
-    for iteration in range(maxIterations):
+    for iteration in range(int(maxIterations)):
         gradient = np.array([np.sum(err*dTheta), 
                              np.sum(err*tgrad.real), 
                              np.sum(err*tgrad.imag)])
-        sHessianDiag = np.diag(lambdavar*np.diag(sHessian))
-        update = np.dot(np.linalg.inv(sHessian+sHessianDiag),gradient)
+        tHessianDiag = np.diag(lambdavar*np.diag(tHessian))
+        update = np.dot(np.linalg.inv(tHessian+tHessianDiag),gradient)
         attempt = newtfrm - update
         displacement = np.sqrt(update[1]*update[1] + update[2]*update[2]) + \
                        0.25 * np.sqrt(widthSq + heightSq) * np.absolute(update[0])
