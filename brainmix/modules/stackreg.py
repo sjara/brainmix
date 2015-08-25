@@ -1,7 +1,3 @@
-'''
-Module for registering a stack of images (of same size and modality).
-'''
-
 import imregistration as imreg
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,7 +20,7 @@ def register_stack(stack, targetInd=0, relative=True):
     '''
     nImages = len(stack)
     outstack = stack.copy() #np.empty(stack.shape)
-    pyramidDepth = get_pyramid_depth(stack[targetInd])
+    pyramidDepth = imreg.get_pyramid_depth(stack[targetInd])
     minLevel = 3 # FIXME: HARDCODED for JaraLab
     print 'Registering stack...'
     for imageInd in range(targetInd-1,-1,-1):
@@ -35,7 +31,7 @@ def register_stack(stack, targetInd=0, relative=True):
         print '{0} to {1}'.format(imageInd,newTargetInd)
         tfrm = imreg.rigid_body_registration(stack[imageInd], outstack[newTargetInd],
                                              pyramidDepth, minLevel)
-        outimg = rigid_body_transform(stack[imageInd], tfrm)
+        outimg = imreg.rigid_body_transform(stack[imageInd], tfrm)
         outstack[imageInd] = outimg
     for imageInd in range(targetInd+1,nImages):
         if relative:
@@ -45,7 +41,7 @@ def register_stack(stack, targetInd=0, relative=True):
         print '{0} to {1}'.format(imageInd,newTargetInd)
         tfrm = imreg.rigid_body_registration(stack[imageInd], outstack[newTargetInd],
                                              pyramidDepth, minLevel)
-        outimg = rigid_body_transform(stack[imageInd], tfrm)
+        outimg = imreg.rigid_body_transform(stack[imageInd], tfrm)
         outstack[imageInd] = outimg
     '''
     if targetInd != len(stack):
@@ -66,49 +62,6 @@ def register_stack(stack, targetInd=0, relative=True):
     '''
     print 'Done registering stack.'
     return outstack
-        
-def get_pyramid_depth(image):
-    '''
-    Computes the depth of the pyramids that will be created and used during image registration.
-
-    Args: 
-        image (np.ndarray): original image
-
-    Returns:
-        pyramidDepth (int): number of layers in pyramids
-    '''
-    pyramidDepth = 1
-    width = image.shape[1]
-    height = image.shape[0]
-    while width > 24 or height > 24:
-        width /= 2
-        height /= 2
-        pyramidDepth += 1
-    return pyramidDepth
-
-def rigid_body_transform(image, tfrm):
-    '''
-    Apply a rigid-body transformation to an image (grayscale).
-
-    Args: 
-        image (np.ndarray): original image
-        tfrm (np.ndarray): (3,) transformation [rotation_angle, translation_x, translation_y]
-
-    Returns:
-        outimg (np.ndarray): A transformed image.
-    '''
-    '''
-    width = image.shape[1]
-    height = image.shape[0]
-    grid = np.meshgrid(np.arange(width), np.arange(height))
-    coords = np.vstack(grid).reshape(2, width*height)
-    spline = interpolate.RectBivariateSpline(np.arange(height), np.arange(width), image)
-    outimg = rbr.rigidBodyTransform(spline, width, height, coords, tfrm)
-    '''
-    skTransform = skimage.transform.SimilarityTransform(rotation=tfrm[0], translation=tfrm[1:])
-    borderColor = np.mean(image[0,:])
-    outimg = skimage.transform.warp(image,skTransform,cval=borderColor)
-    return outimg
 
 
 if __name__=='__main__':
@@ -130,4 +83,5 @@ if __name__=='__main__':
 
     for image in range(len(regstack)):
         plt.imshow(regstack[image], interpolation='none')
+        plt.show()
         plt.waitforbuttonpress()
