@@ -115,7 +115,6 @@ def rigid_body_registration(source, target, pyramidDepth, minLevel=0, downscale=
     scenter = scipy.ndimage.measurements.center_of_mass(sourcePyramid[minLevel])
     tcenter = scipy.ndimage.measurements.center_of_mass(targetPyramid[minLevel])
     tfrm = np.array([0, scenter[0]-tcenter[0], scenter[1]-tcenter[1]])
-    print tfrm
     tfrm[1:] /= pow(downscale,pyramidDepth-minLevel)
     #tfrm = np.zeros(3)
 
